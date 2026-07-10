@@ -12,6 +12,7 @@
         header::before{content:'';position:absolute;top:-50px;right:-50px;width:150px;height:150px;background:rgba(255,255,255,.15);border-radius:50%}
         header h1{font-size:1.8rem;font-weight:800;color:var(--dark);position:relative}
         header p{font-size:.9rem;color:var(--dark);opacity:.75;margin-top:4px;position:relative}
+        .version-tag{font-size:.6rem;opacity:.5;position:relative}
         .sun-icon{font-size:2rem;display:block;margin-bottom:4px}
         .progress-bar{display:flex;justify-content:center;gap:4px;padding:14px 16px;background:var(--sun-light)}
         .progress-step{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--gray);opacity:.4;transition:.3s}
@@ -67,6 +68,8 @@
         .badge-best{background:var(--sun-yellow);color:var(--dark)}
         .badge-current{background:#FFEBEE;color:#C62828}
         .badge-savings{background:#E8F5E9;color:#2E7D32}
+        .badge-gift{background:#E8F5E9;color:#1B5E20}
+        .badge-freehrs{background:#E3F2FD;color:#0D47A1}
         .result-provider{font-size:1.05rem;font-weight:700}
         .result-plan{font-size:.8rem;color:var(--gray);margin-bottom:8px}
         .result-cost{display:flex;justify-content:space-between;align-items:baseline}
@@ -97,6 +100,21 @@
         .why-box li{font-size:.8rem;padding:3px 0 3px 18px;position:relative}
         .why-expensive li::before{content:"\2717";position:absolute;left:0;color:var(--danger);font-weight:700}
         .why-cheap li::before{content:"\2713";position:absolute;left:0;color:var(--success);font-weight:700}
+        .margin-box{background:#F3E5F5;border:2px solid #9C27B0;border-radius:12px;padding:16px;margin-bottom:20px}
+        .margin-box h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:#6A1B9A}
+        .margin-box p{font-size:.82rem;line-height:1.5;margin-bottom:8px}
+        .margin-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+        .margin-table th{text-align:left;padding:6px 8px;background:#EDE7F6;font-weight:700;color:#4A148C}
+        .margin-table td{padding:6px 8px;border-bottom:1px solid #E0E0E0}
+        .margin-table .num{text-align:right}
+        .margin-table .win{background:#E8F5E9;font-weight:700}
+        .free-hrs-box{background:#E3F2FD;border:2px solid #1565C0;border-radius:12px;padding:16px;margin-bottom:20px}
+        .free-hrs-box h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:#0D47A1}
+        .free-hrs-box p{font-size:.82rem;line-height:1.5;margin-bottom:6px}
+        .free-hrs-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+        .free-hrs-table th{text-align:left;padding:6px 8px;background:#BBDEFB;font-weight:700;color:#0D47A1}
+        .free-hrs-table td{padding:6px 8px;border-bottom:1px solid #E0E0E0}
+        .free-hrs-table .num{text-align:right}
         .loading{text-align:center;padding:60px 20px}
         .spinner{width:48px;height:48px;border:4px solid #E0E0E0;border-top-color:var(--sun-yellow);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
         @keyframes spin{to{transform:rotate(360deg)}}
@@ -105,7 +123,7 @@
     </style>
 </head>
 <body>
-<header><div class="sun-icon">&#9728;&#65039;</div><h1>BrightGrid</h1><p>Compare electricity plans — see who saves you the most</p></header>
+<header><div class="sun-icon">&#9728;&#65039;</div><h1>BrightGrid</h1><p>Compare electricity plans — see who saves you the most</p><div class="version-tag">v8</div></header>
 <div class="progress-bar">
     <div class="progress-step active" data-step="1"><div class="step-dot">1</div><span>Your Usage</span></div>
     <span class="step-connector"></span>
@@ -127,6 +145,9 @@
             <div class="range-group"><label>Summer — daily solar export (kWh)<span class="range-value" id="exportVal">10 kWh</span></label><input type="range" id="solarExport" min="0" max="50" value="10" step="0.5" oninput="updateR(this,'exportVal',' kWh')"><div class="hint">Excess solar you sell back to grid</div></div>
             <div class="range-group"><label>Winter — daily solar export (kWh)<span class="range-value" id="winterExpVal">0 kWh</span></label><input type="range" id="winterExport" min="0" max="30" value="0" step="0.5" oninput="updateR(this,'winterExpVal',' kWh')"><div class="hint">Usually less or zero in winter</div></div>
         </div>
+        <div id="batteryChargeSection" style="display:none">
+            <div class="range-group"><label>Battery charge rate (kW)<span class="range-value" id="chargeRateVal">5 kW</span></label><input type="range" id="chargeRate" min="1" max="15" value="5" step="0.5" oninput="updateR(this,'chargeRateVal',' kW')"><div class="hint">Your battery's max charge speed — used to calculate free hours value</div></div>
+        </div>
         <button class="btn btn-primary" onclick="goToStep(2)">Next — Your Current Plan</button>
     </div>
     <div class="section" id="step2">
@@ -146,7 +167,9 @@
         <div id="results" style="display:none">
             <h2 class="section-title">Your comparison results</h2>
             <p class="section-desc" id="resultsSummary"></p>
+            <div id="freeHoursBox"></div>
             <div id="whyBox"></div>
+            <div id="marginBox"></div>
             <div id="resultsList"></div>
             <div class="btn-row"><button class="btn btn-secondary" onclick="goToStep(1)">Change Usage</button><button class="btn btn-primary" onclick="goToStep(2)">Change Plan</button></div>
         </div>
@@ -155,26 +178,26 @@
 <footer><p>Rates from retailer fact sheets & ESC VDO 2026-27. Updated July 2026. BrightGrid is independent — no commissions.</p></footer>
 <script>
 var PLANS=[
-    {provider:'Amber Electric',plan:'SmartShift',type:'Wholesale variable',usage:22.00,supply:98.00,feedIn:8.0,note:'Avg wholesale rate. Varies hourly.'},
-    {provider:'Tango Energy',plan:'Home Select',type:'Fixed 12 months',usage:24.50,supply:105.00,feedIn:5.5,note:''},
-    {provider:'1st Energy',plan:'Residential Saver',type:'Variable',usage:24.80,supply:102.00,feedIn:5.5,note:'Mozo award winner 2025-26'},
-    {provider:'Nectr',plan:'Nectr Home',type:'Fixed 12 months',usage:25.00,supply:99.50,feedIn:5.8,note:'Stanwell-owned, low supply charge'},
-    {provider:'Momentum Energy',plan:'Smile Power Flexi',type:'Variable',usage:25.20,supply:107.00,feedIn:5.2,note:''},
-    {provider:'GloBird Energy',plan:'EasySave',type:'Variable',usage:25.80,supply:100.50,feedIn:5.0,note:'No lock-in contract'},
-    {provider:'CovaU',plan:'Power Saver',type:'Variable',usage:25.50,supply:103.00,feedIn:5.0,note:''},
-    {provider:'Alinta Energy',plan:'Home Deal',type:'Fixed 12 months',usage:26.00,supply:108.00,feedIn:5.0,note:''},
-    {provider:'Energy Locals',plan:'Resident Plan',type:'Variable',usage:25.90,supply:104.50,feedIn:5.5,note:'Apartment-focused, award-winning'},
-    {provider:'Red Energy',plan:'Living Energy Saver',type:'Fixed 12 months',usage:26.50,supply:101.00,feedIn:6.0,note:'Snowy Hydro owned'},
-    {provider:'Lumo Energy',plan:'Basic',type:'Variable',usage:27.20,supply:108.50,feedIn:4.5,note:'Snowy Hydro owned, same parent as Red'},
-    {provider:'Simply Energy',plan:'Simply Plus',type:'Variable',usage:27.80,supply:106.00,feedIn:5.0,note:'Engie owned'},
-    {provider:'Energy Australia',plan:'Total Plan',type:'Variable',usage:27.00,supply:110.00,feedIn:5.5,note:'Pay on time discount'},
-    {provider:'Origin Energy',plan:'Solar Boost Plus',type:'Fixed benefit',usage:27.50,supply:109.00,feedIn:7.0,note:'High feed-in for solar'},
-    {provider:'Dodo Power & Gas',plan:'Dodo Electricity',type:'Variable',usage:28.50,supply:109.00,feedIn:4.5,note:'Bundle with internet for discount'},
-    {provider:'AGL',plan:'Value Saver',type:'Variable',usage:28.00,supply:112.00,feedIn:5.0,note:''},
-    {provider:'Sumo Energy',plan:'Sumo Assure',type:'Fixed 12 months',usage:26.80,supply:107.50,feedIn:3.5,note:'Low feed-in'},
-    {provider:'OVO Energy',plan:'The One Plan',type:'Variable (VDO rates)',usage:31.98,supply:128.24,feedIn:5.0,note:'Equal to VDO + 3% interest reward on credit. No fees.'},
-    {provider:'Powershop',plan:'Power House',type:'Variable + Powerpacks',usage:34.31,supply:111.08,feedIn:3.3,note:'Powerpack discounts not included'},
-    {provider:'Victorian Default Offer',plan:'VDO 2026-27 (ESC max)',type:'Regulated max',usage:31.98,supply:128.24,feedIn:4.5,note:'Maximum regulated price',isVDO:true}
+    {provider:'Amber Electric',plan:'SmartShift',type:'Wholesale variable',usage:22.00,supply:98.00,feedIn:8.0,note:'Avg wholesale rate. Varies hourly.',giftCard:0,freeHours:0},
+    {provider:'Tango Energy',plan:'Home Select',type:'Fixed 12 months',usage:24.50,supply:105.00,feedIn:5.5,note:'',giftCard:75,freeHours:0},
+    {provider:'1st Energy',plan:'Residential Saver',type:'Variable',usage:24.80,supply:102.00,feedIn:5.5,note:'Mozo award winner 2025-26',giftCard:50,freeHours:0},
+    {provider:'Nectr',plan:'Nectr Home',type:'Fixed 12 months',usage:25.00,supply:99.50,feedIn:5.8,note:'Stanwell-owned, low supply charge',giftCard:0,freeHours:0},
+    {provider:'Momentum Energy',plan:'Smile Power Flexi',type:'Variable',usage:25.20,supply:107.00,feedIn:5.2,note:'',giftCard:0,freeHours:0},
+    {provider:'GloBird Energy',plan:'EasySave',type:'Variable',usage:25.80,supply:100.50,feedIn:5.0,note:'No lock-in contract',giftCard:0,freeHours:3},
+    {provider:'CovaU',plan:'Power Saver',type:'Variable',usage:25.50,supply:103.00,feedIn:5.0,note:'',giftCard:0,freeHours:0},
+    {provider:'Alinta Energy',plan:'Home Deal',type:'Fixed 12 months',usage:26.00,supply:108.00,feedIn:5.0,note:'',giftCard:100,freeHours:0},
+    {provider:'Energy Locals',plan:'Resident Plan',type:'Variable',usage:25.90,supply:104.50,feedIn:5.5,note:'Apartment-focused, award-winning',giftCard:0,freeHours:0},
+    {provider:'Red Energy',plan:'Living Energy Saver',type:'Fixed 12 months',usage:26.50,supply:101.00,feedIn:6.0,note:'Snowy Hydro owned',giftCard:100,freeHours:0},
+    {provider:'Lumo Energy',plan:'Basic',type:'Variable',usage:27.20,supply:108.50,feedIn:4.5,note:'Snowy Hydro owned, same parent as Red',giftCard:0,freeHours:0},
+    {provider:'Simply Energy',plan:'Simply Plus',type:'Variable',usage:27.80,supply:106.00,feedIn:5.0,note:'Engie owned',giftCard:120,freeHours:0},
+    {provider:'Energy Australia',plan:'Total Plan',type:'Variable',usage:27.00,supply:110.00,feedIn:5.5,note:'Pay on time discount',giftCard:0,freeHours:2},
+    {provider:'Origin Energy',plan:'Solar Boost Plus',type:'Fixed benefit',usage:27.50,supply:109.00,feedIn:7.0,note:'High feed-in for solar',giftCard:0,freeHours:0},
+    {provider:'Dodo Power & Gas',plan:'Dodo Electricity',type:'Variable',usage:28.50,supply:109.00,feedIn:4.5,note:'Bundle with internet for discount',giftCard:50,freeHours:0},
+    {provider:'AGL',plan:'Value Saver',type:'Variable',usage:28.00,supply:112.00,feedIn:5.0,note:'',giftCard:150,freeHours:0},
+    {provider:'Sumo Energy',plan:'Sumo Assure',type:'Fixed 12 months',usage:26.80,supply:107.50,feedIn:3.5,note:'Low feed-in',giftCard:0,freeHours:0},
+    {provider:'OVO Energy',plan:'The One Plan',type:'Variable (VDO rates)',usage:31.98,supply:128.24,feedIn:5.0,note:'Equal to VDO + 3% interest reward on credit. No fees.',giftCard:0,freeHours:0},
+    {provider:'Powershop',plan:'Power House',type:'Variable + Powerpacks',usage:34.31,supply:111.08,feedIn:3.3,note:'Powerpack discounts not included',giftCard:0,freeHours:0},
+    {provider:'Victorian Default Offer',plan:'VDO 2026-27 (ESC max)',type:'Regulated max',usage:31.98,supply:128.24,feedIn:4.5,note:'Maximum regulated price',isVDO:true,giftCard:0,freeHours:0}
 ];
 var SUMMER=151,WINTER=214;
 
@@ -183,6 +206,7 @@ function updateSetup(){
     var battery=document.getElementById('hasBattery').checked;
     document.getElementById('batterySection').style.display=solar?'block':'none';
     document.getElementById('exportSection').style.display=solar?'block':'none';
+    document.getElementById('batteryChargeSection').style.display=(solar&&battery)?'block':'none';
     if(!solar)document.getElementById('hasBattery').checked=false;
     var box=document.getElementById('scenarioBox');
     var ss=document.getElementById('summerGrid'),ws=document.getElementById('winterGrid');
@@ -198,13 +222,20 @@ function updateSetup(){
         document.getElementById('summerHint').textContent='Mostly night usage — solar covers daytime';
         document.getElementById('winterHint').textContent='Longer nights + cloudy days = more grid draw';
     }else{
-        box.innerHTML='<strong>Solar + Battery</strong><br>Battery stores daytime solar for night use. <strong>Minimal grid draw</strong> — mostly in winter when solar cannot keep up. <strong>Feed-in tariff</strong> and <strong>supply charge</strong> matter most.';
+        box.innerHTML='<strong>Solar + Battery</strong><br>Battery stores daytime solar for night use. <strong>Minimal grid draw</strong> — mostly in winter when solar cannot keep up. <strong>Feed-in tariff</strong> and <strong>supply charge</strong> matter most.<br><br><strong>Free Hours bonus:</strong> GloBird (3hr) and Energy Australia (2hr) let your battery charge from grid at $0 — extra savings calculated below.';
         ss.value=0;ws.value=4;es.value=10;wes.value=0;
         document.getElementById('summerHint').textContent='Battery covers night — often 0 from grid';
         document.getElementById('winterHint').textContent='Only what battery cannot cover on short/cloudy days';
     }
     updateR(ss,'summerVal',' kWh');updateR(ws,'winterVal',' kWh');
     if(solar){updateR(es,'exportVal',' kWh');updateR(wes,'winterExpVal',' kWh');}
+}
+
+function calcFreeHoursValue(plan, chargeRateKw, hasBattery){
+    // Free hours: battery charges from grid at $0 during free window
+    // Value = hours * chargeRate(kW) * usage rate * 365 days / 100 (convert c to $)
+    if(!hasBattery || plan.freeHours === 0) return 0;
+    return plan.freeHours * chargeRateKw * plan.usage / 100 * 365;
 }
 
 function calcBD(o,sg,wg,se,we){
@@ -237,6 +268,8 @@ function compare(){
     document.getElementById('results').style.display='none';
     setTimeout(function(){
         var solar=document.getElementById('hasSolar').checked;
+        var battery=document.getElementById('hasBattery').checked;
+        var chargeRate=battery?parseFloat(document.getElementById('chargeRate').value):5;
         var sg=parseFloat(document.getElementById('summerGrid').value);
         var wg=parseFloat(document.getElementById('winterGrid').value);
         var se=solar?parseFloat(document.getElementById('solarExport').value):0;
@@ -247,40 +280,99 @@ function compare(){
         var cn=document.getElementById('curProvider').value||'Your Current Plan';
         var hc=cu>0&&cs>0;
         var all=PLANS.slice();
-        if(hc)all.push({provider:cn,plan:'Your current plan',type:'Current',usage:cu,supply:cs,feedIn:cf,note:'',isCurrent:true});
+        if(hc)all.push({provider:cn,plan:'Your current plan',type:'Current',usage:cu,supply:cs,feedIn:cf,note:'',isCurrent:true,giftCard:0,freeHours:0});
         var res=all.map(function(p){
             var bd=calcBD(p,sg,wg,se,we);
-            return{provider:p.provider,plan:p.plan,type:p.type,usage:p.usage,supply:p.supply,feedIn:p.feedIn,note:p.note,isVDO:p.isVDO,isCurrent:p.isCurrent,su:bd.su,wu:bd.wu,sp:bd.sp,sf:bd.sf,wf:bd.wf,tf:bd.tf,annual:Math.round(bd.a),monthly:Math.round(bd.a/12),spDisp:Math.round(bd.sp)};
+            var fhv=calcFreeHoursValue(p,chargeRate,battery);
+            var gc=p.giftCard||0;
+            var rawAnnual=bd.a;
+            var effectiveAnnual=rawAnnual-gc-fhv;
+            return{provider:p.provider,plan:p.plan,type:p.type,usage:p.usage,supply:p.supply,feedIn:p.feedIn,note:p.note,isVDO:p.isVDO,isCurrent:p.isCurrent,su:bd.su,wu:bd.wu,sp:bd.sp,sf:bd.sf,wf:bd.wf,tf:bd.tf,freeHours:p.freeHours||0,freeHoursValue:Math.round(fhv),giftCard:gc,rawAnnual:Math.round(rawAnnual),annual:Math.round(effectiveAnnual),monthly:Math.round(effectiveAnnual/12),spDisp:Math.round(bd.sp)};
         });
         res.sort(function(a,b){return a.annual-b.annual});
         var best=res[0],cur=res.find(function(r){return r.isCurrent});
-        var sum=res.length+' plans compared.';
+        var sum=res.length+' plans compared (incl. gift cards & free hours bonuses).';
         if(cur){var sv=cur.annual-best.annual;if(sv>0)sum+=' Switch to '+best.provider+' to save $'+sv+'/year ($'+Math.round(sv/12)+'/month).';else sum+=' Your plan is already competitive!';}
         document.getElementById('resultsSummary').textContent=sum;
+
+        // Free Hours analysis box (only if battery)
+        var fhHtml='';
+        if(battery){
+            var fhPlans=res.filter(function(r){return r.freeHours>0});
+            if(fhPlans.length>0){
+                fhHtml='<div class="free-hrs-box"><h3>Free Hours Bonus (Battery Charging)</h3>';
+                fhHtml+='<p>These providers give free electricity windows. With your <strong>'+chargeRate+' kW</strong> battery charger, you save by charging from grid at $0:</p>';
+                fhHtml+='<table class="free-hrs-table"><tr><th>Provider</th><th>Free Hours</th><th>Daily kWh Free</th><th class="num">Annual Value</th></tr>';
+                fhPlans.forEach(function(fp){
+                    var dailyKwh=fp.freeHours*chargeRate;
+                    fhHtml+='<tr><td>'+fp.provider+'</td><td>'+fp.freeHours+' hrs/day</td><td>'+dailyKwh.toFixed(1)+' kWh</td><td class="num"><strong>$'+fp.freeHoursValue+'</strong></td></tr>';
+                });
+                fhHtml+='</table>';
+                fhHtml+='<p style="margin-top:10px;font-size:.75rem;color:#455A64">In winter, if your grid draw is covered by free hours alone, your usage cost = $0. Battery charges for free during those hours instead of drawing expensive peak power.</p>';
+                fhHtml+='</div>';
+            }
+        }
+        document.getElementById('freeHoursBox').innerHTML=fhHtml;
+
+        // Why boxes
         var wh='';
         if(cur&&cur.annual>best.annual){
             wh+='<div class="why-box why-expensive"><h3>Why '+cur.provider+' costs more:</h3><ul>';
             if(cur.supply>best.supply+5)wh+='<li>Supply charge '+cur.supply.toFixed(1)+'c/day = $'+Math.round(cur.supply/100*365)+'/yr — $'+Math.round((cur.supply-best.supply)/100*365)+' more than cheapest</li>';
             if(cur.feedIn<best.feedIn-1&&se>0)wh+='<li>Feed-in '+cur.feedIn+'c vs '+best.feedIn+'c — losing $'+Math.round((best.feedIn-cur.feedIn)/100*(se*SUMMER+we*WINTER))+'/yr in solar credits</li>';
             if(cur.usage>best.usage+3)wh+='<li>Usage rate '+cur.usage+'c vs '+best.usage+'c — paying '+(cur.usage-best.usage).toFixed(1)+'c more per kWh</li>';
+            if(best.giftCard>0)wh+='<li>'+best.provider+' offers $'+best.giftCard+' sign-up gift card</li>';
+            if(best.freeHours>0&&battery)wh+='<li>'+best.provider+' gives '+best.freeHours+' free hours/day worth $'+best.freeHoursValue+'/yr with battery</li>';
             wh+='</ul></div>';
             wh+='<div class="why-box why-cheap"><h3>Why '+best.provider+' saves most:</h3><ul>';
             if(best.feedIn>=6&&se>0)wh+='<li>High feed-in ('+best.feedIn+'c) earns $'+Math.round(best.tf)+'/yr for solar exports</li>';
             if(best.supply<cur.supply-5)wh+='<li>Lower daily charge saves $'+Math.round((cur.supply-best.supply)/100*365)+'/yr</li>';
             if(best.usage<cur.usage-3)wh+='<li>Cheaper usage rate saves on every kWh</li>';
+            if(best.giftCard>0)wh+='<li>$'+best.giftCard+' sign-up gift card (credited in first year)</li>';
+            if(best.freeHours>0&&battery)wh+='<li>'+best.freeHours+' free hours/day = $'+best.freeHoursValue+'/yr free battery charging</li>';
             if(se>5)wh+='<li>For solar homes: high feed-in + low supply = biggest savings</li>';
             else if(sg+wg>20)wh+='<li>For high-usage homes: low usage rate matters most</li>';
             wh+='</ul></div>';
         }
         document.getElementById('whyBox').innerHTML=wh;
+
+        // Margin Finder — breakeven analysis
+        var mHtml='';
+        if(res.length>=2){
+            var cheapest=res[0];
+            var runners=res.filter(function(r){return !r.isCurrent && !r.isVDO && r!==cheapest}).slice(0,7);
+            mHtml='<div class="margin-box"><h3>Margin Finder — Breakeven Analysis</h3>';
+            mHtml+='<p>How close are other plans to #1? What gift card or rate cut would they need to beat <strong>'+cheapest.provider+'</strong> ($'+cheapest.annual+'/yr)?</p>';
+            mHtml+='<table class="margin-table"><tr><th>Provider</th><th class="num">Effective $/yr</th><th class="num">Gap to #1</th><th class="num">Gift Card Needed</th><th class="num">Rate Cut Needed</th></tr>';
+            runners.forEach(function(r){
+                var gap=r.annual-cheapest.annual;
+                var gcNeeded=gap+r.giftCard; // they already have their gc applied, so need this extra
+                var totalKwh=sg*SUMMER+wg*WINTER;
+                var rateCut=totalKwh>0?((gap*100)/totalKwh).toFixed(2):'n/a';
+                var isClose=gap<=30;
+                mHtml+='<tr'+(isClose?' class="win"':'')+'><td>'+r.provider+'</td><td class="num">$'+r.annual+'</td><td class="num">+$'+gap+'</td><td class="num">$'+gcNeeded+'</td><td class="num">'+rateCut+'c/kWh</td></tr>';
+            });
+            mHtml+='</table>';
+            mHtml+='<p style="margin-top:10px;font-size:.75rem;color:#4A148C"><strong>How to read:</strong> "Gift Card Needed" = the total sign-up bonus that would make them equal to #1. "Rate Cut" = how much their usage rate would need to drop. Green rows are within $30 — almost tied.</p>';
+            mHtml+='</div>';
+        }
+        document.getElementById('marginBox').innerHTML=mHtml;
+
+        // Results list
         document.getElementById('resultsList').innerHTML=res.map(function(r,i){
             var cc='',badge='';
             if(i===0){cc='best';badge='<span class="badge badge-best">Cheapest for you</span>';}
             if(r.isCurrent){cc='current';badge='<span class="badge badge-current">Your Current Plan</span>';}
             if(r.isVDO){badge='<span class="badge" style="background:#E3F2FD;color:#1565C0">VDO Max</span>';}
             if(!r.isCurrent&&!r.isVDO&&i>0){var d=r.annual-best.annual;if(d>0)badge='<span class="badge badge-savings">+$'+d+'/yr</span>';}
+            // Extra badges for gift cards and free hours
+            var extraBadge='';
+            if(r.giftCard>0)extraBadge+=' <span class="badge badge-gift">$'+r.giftCard+' gift card</span>';
+            if(r.freeHours>0&&battery)extraBadge+=' <span class="badge badge-freehrs">'+r.freeHours+'hr free</span>';
             var bid='bd_'+i;
-            return '<div class="result-card '+cc+'">'+badge+'<div class="result-provider">'+r.provider+'</div><div class="result-plan">'+r.plan+' &middot; '+r.type+(r.note?' &middot; <em>'+r.note+'</em>':'')+'</div><div class="result-cost"><span class="result-annual">$'+r.annual+' <small>/yr</small></span><span class="result-monthly">~$'+r.monthly+'/mo</span></div><div class="result-details"><div class="result-detail"><div class="dt">Usage</div><div class="dd">'+r.usage+'c</div></div><div class="result-detail"><div class="dt">Supply</div><div class="dd">'+r.supply.toFixed(0)+'c/d</div></div><div class="result-detail"><div class="dt">Feed-in</div><div class="dd">'+r.feedIn+'c</div></div><div class="result-detail"><div class="dt">FiT Credit</div><div class="dd" style="color:#43A047">-$'+Math.round(r.tf)+'</div></div></div><button class="btn-details" onclick="toggleBD(''+bid+'')">More Details</button><div class="breakdown" id="'+bid+'"><table class="breakdown-table"><tr><th colspan="3">Annual Breakdown — '+r.provider+'</th></tr><tr><td>Supply charge</td><td class="num">'+r.supply.toFixed(2)+'c/day x 365</td><td class="num">$'+r.spDisp+'</td></tr><tr><td>Summer grid</td><td class="num">'+sg+' kWh x '+r.usage+'c x '+SUMMER+' days</td><td class="num">$'+Math.round(r.su)+'</td></tr><tr><td>Winter grid</td><td class="num">'+wg+' kWh x '+r.usage+'c x '+WINTER+' days</td><td class="num">$'+Math.round(r.wu)+'</td></tr><tr><td>Summer feed-in</td><td class="num">'+se+' kWh x '+r.feedIn+'c x '+SUMMER+' days</td><td class="num credit">-$'+Math.round(r.sf)+'</td></tr><tr><td>Winter feed-in</td><td class="num">'+we+' kWh x '+r.feedIn+'c x '+WINTER+' days</td><td class="num credit">-$'+Math.round(r.wf)+'</td></tr><tr style="background:var(--sun-glow)"><td><strong>Annual</strong></td><td></td><td class="num"><strong>$'+r.annual+'</strong></td></tr><tr><td>Monthly</td><td></td><td class="num">$'+r.monthly+'/mo</td></tr><tr><td>Daily</td><td></td><td class="num">$'+(r.annual/365).toFixed(2)+'/day</td></tr></table></div></div>';
+            var gcRow=r.giftCard>0?'<tr><td>Sign-up gift card</td><td class="num">One-off credit</td><td class="num credit">-$'+r.giftCard+'</td></tr>':'';
+            var fhRow=(r.freeHours>0&&battery)?'<tr><td>Free hours value ('+r.freeHours+'hr x '+chargeRate+'kW)</td><td class="num">'+r.freeHours+'hr x '+chargeRate+'kW x '+r.usage+'c x 365</td><td class="num credit">-$'+r.freeHoursValue+'</td></tr>':'';
+            return '<div class="result-card '+cc+'">'+badge+extraBadge+'<div class="result-provider">'+r.provider+'</div><div class="result-plan">'+r.plan+' &middot; '+r.type+(r.note?' &middot; <em>'+r.note+'</em>':'')+'</div><div class="result-cost"><span class="result-annual">$'+r.annual+' <small>/yr</small></span><span class="result-monthly">~$'+r.monthly+'/mo</span></div><div class="result-details"><div class="result-detail"><div class="dt">Usage</div><div class="dd">'+r.usage+'c</div></div><div class="result-detail"><div class="dt">Supply</div><div class="dd">'+r.supply.toFixed(0)+'c/d</div></div><div class="result-detail"><div class="dt">Feed-in</div><div class="dd">'+r.feedIn+'c</div></div><div class="result-detail"><div class="dt">FiT Credit</div><div class="dd" style="color:#43A047">-$'+Math.round(r.tf)+'</div></div></div><button class="btn-details" onclick="toggleBD(\''+bid+'\')">More Details</button><div class="breakdown" id="'+bid+'"><table class="breakdown-table"><tr><th colspan="3">Annual Breakdown — '+r.provider+'</th></tr><tr><td>Supply charge</td><td class="num">'+r.supply.toFixed(2)+'c/day x 365</td><td class="num">$'+r.spDisp+'</td></tr><tr><td>Summer grid</td><td class="num">'+sg+' kWh x '+r.usage+'c x '+SUMMER+' days</td><td class="num">$'+Math.round(r.su)+'</td></tr><tr><td>Winter grid</td><td class="num">'+wg+' kWh x '+r.usage+'c x '+WINTER+' days</td><td class="num">$'+Math.round(r.wu)+'</td></tr><tr><td>Summer feed-in</td><td class="num">'+se+' kWh x '+r.feedIn+'c x '+SUMMER+' days</td><td class="num credit">-$'+Math.round(r.sf)+'</td></tr><tr><td>Winter feed-in</td><td class="num">'+we+' kWh x '+r.feedIn+'c x '+WINTER+' days</td><td class="num credit">-$'+Math.round(r.wf)+'</td></tr>'+gcRow+fhRow+'<tr style="background:var(--sun-glow)"><td><strong>Effective Annual</strong></td><td></td><td class="num"><strong>$'+r.annual+'</strong></td></tr><tr><td>Raw (no bonuses)</td><td></td><td class="num">$'+r.rawAnnual+'</td></tr><tr><td>Monthly</td><td></td><td class="num">$'+r.monthly+'/mo</td></tr><tr><td>Daily</td><td></td><td class="num">$'+(r.annual/365).toFixed(2)+'/day</td></tr></table></div></div>';
         }).join('');
         document.getElementById('loading').style.display='none';
         document.getElementById('results').style.display='block';
