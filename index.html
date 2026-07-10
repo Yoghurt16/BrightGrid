@@ -21,17 +21,9 @@
             --shadow: 0 4px 20px rgba(255, 214, 0, 0.15);
             --radius: 16px;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--white); color: var(--dark); line-height: 1.6; min-height: 100vh;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--white); color: var(--dark); line-height: 1.6; min-height: 100vh; }
 
-        header {
-            background: linear-gradient(135deg, var(--sun-yellow) 0%, var(--sun-warm) 50%, var(--sun-orange) 100%);
-            padding: 24px 24px 20px; text-align: center;
-            box-shadow: 0 4px 20px rgba(255, 143, 0, 0.25);
-            position: relative; overflow: hidden;
-        }
+        header { background: linear-gradient(135deg, var(--sun-yellow) 0%, var(--sun-warm) 50%, var(--sun-orange) 100%); padding: 24px 24px 20px; text-align: center; box-shadow: 0 4px 20px rgba(255, 143, 0, 0.25); position: relative; overflow: hidden; }
         header::before { content:''; position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:rgba(255,255,255,0.15); border-radius:50%; }
         header h1 { font-size: 1.8rem; font-weight: 800; color: var(--dark); position: relative; }
         header p { font-size: 0.9rem; color: var(--dark); opacity: 0.75; margin-top: 4px; position: relative; }
@@ -90,7 +82,8 @@
         .btn-row { display:flex; gap:12px; margin-top:24px; }
         .btn-row .btn { flex:1; }
 
-        .result-card { background:var(--white); border:2px solid #E8E8E8; border-radius:var(--radius); padding:20px; margin-bottom:14px; position:relative; }
+        /* Result cards */
+        .result-card { background:var(--white); border:2px solid #E8E8E8; border-radius:var(--radius); padding:20px; margin-bottom:14px; position:relative; transition:all 0.2s; }
         .result-card.best { border-color:var(--sun-yellow); box-shadow:0 4px 24px rgba(255,214,0,0.2); }
         .result-card.current { border-color:var(--danger); border-style:dashed; background:#FFFBFB; }
         .badge { display:inline-block; font-size:0.65rem; font-weight:700; padding:3px 10px; border-radius:20px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
@@ -108,15 +101,30 @@
         .result-detail .dt { font-size:0.65rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.3px; }
         .result-detail .dd { font-size:0.85rem; font-weight:700; margin-top:2px; }
 
+        /* More Details button & breakdown */
+        .btn-details { display:block; width:100%; margin-top:12px; padding:10px; background:var(--sun-light); border:1px solid #E0E0E0; border-radius:10px; font-size:0.8rem; font-weight:600; color:var(--sun-orange); cursor:pointer; transition:all 0.2s; text-align:center; }
+        .btn-details:hover { background:var(--sun-glow); border-color:var(--sun-warm); }
+        .breakdown { display:none; margin-top:12px; padding:14px; background:var(--light-gray); border-radius:12px; animation:fadeIn 0.3s ease; }
+        .breakdown.open { display:block; }
+        .breakdown-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+        .breakdown-table th { text-align:left; padding:6px 8px; background:var(--sun-glow); font-weight:700; font-size:0.7rem; text-transform:uppercase; color:var(--gray); border-radius:4px; }
+        .breakdown-table td { padding:6px 8px; border-bottom:1px solid #E8E8E8; }
+        .breakdown-table tr:last-child td { border-bottom:none; font-weight:700; }
+        .breakdown-table .num { text-align:right; font-variant-numeric:tabular-nums; }
+        .breakdown-table .subtotal td { background:var(--sun-glow); font-weight:700; border-radius:4px; }
+        .breakdown-table .credit { color:var(--success); }
+        .breakdown-table .debit { color:var(--danger); }
+
+        /* Analysis boxes */
         .why-expensive { background:#FFF3E0; border-radius:12px; padding:16px; margin-bottom:20px; border-left:4px solid var(--sun-orange); }
         .why-expensive h3 { font-size:0.9rem; font-weight:700; margin-bottom:8px; color:var(--danger); }
         .why-expensive ul { list-style:none; padding:0; }
-        .why-expensive li { font-size:0.82rem; padding:4px 0; padding-left:20px; position:relative; }
+        .why-expensive li { font-size:0.82rem; padding:4px 0 4px 20px; position:relative; }
         .why-expensive li::before { content:"\2717"; position:absolute; left:0; color:var(--danger); font-weight:700; }
         .why-cheap { background:#E8F5E9; border-radius:12px; padding:16px; margin-bottom:20px; border-left:4px solid var(--success); }
         .why-cheap h3 { font-size:0.9rem; font-weight:700; margin-bottom:8px; color:var(--success); }
         .why-cheap ul { list-style:none; padding:0; }
-        .why-cheap li { font-size:0.82rem; padding:4px 0; padding-left:20px; position:relative; }
+        .why-cheap li { font-size:0.82rem; padding:4px 0 4px 20px; position:relative; }
         .why-cheap li::before { content:"\2713"; position:absolute; left:0; color:var(--success); font-weight:700; }
 
         .zone-info { background:var(--sun-glow); border-radius:12px; padding:14px 16px; margin-top:16px; display:none; }
@@ -138,6 +146,8 @@
             .progress-step span { display:none; }
             .plan-inputs { grid-template-columns:1fr; }
             .btn-row { flex-direction:column; }
+            .breakdown-table { font-size:0.72rem; }
+            .breakdown-table td, .breakdown-table th { padding:5px 4px; }
         }
     </style>
 </head>
@@ -202,40 +212,40 @@
         </div>
 
         <div class="info-box">
-            <strong>Season split:</strong> Summer = Nov–Mar (151 days) | Winter = Apr–Oct (214 days). Victoria has longer cold months — this affects your bill significantly.
+            <strong>Season split:</strong> Summer = Nov–Mar (151 days) | Winter = Apr–Oct (214 days).<br>
+            <strong>Tip:</strong> For grid usage, only count what you actually draw FROM the grid — not total home usage.
         </div>
 
         <div class="range-group">
             <label>Summer: daily grid usage (kWh)<span class="range-value" id="summerVal">0 kWh</span></label>
-            <input type="range" id="summerGrid" min="0" max="30" value="0" oninput="updateR(this,'summerVal',' kWh')">
-            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">With solar+battery, this is often 0 in summer</div>
+            <input type="range" id="summerGrid" min="0" max="30" value="0" step="0.5" oninput="updateR(this,'summerVal',' kWh')">
+            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">With solar+battery, often 0 in summer</div>
         </div>
         <div class="range-group">
-            <label>Winter: daily grid usage (kWh)<span class="range-value" id="winterVal">2 kWh</span></label>
-            <input type="range" id="winterGrid" min="0" max="30" value="2" oninput="updateR(this,'winterVal',' kWh')">
-            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">Only what you draw FROM the grid (after solar+battery)</div>
+            <label>Winter: daily grid usage (kWh)<span class="range-value" id="winterVal">4 kWh</span></label>
+            <input type="range" id="winterGrid" min="0" max="30" value="4" step="0.5" oninput="updateR(this,'winterVal',' kWh')">
+            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">What you draw from grid after solar+battery</div>
         </div>
         <div class="range-group" id="exportGroup">
-            <label>Summer: daily solar export (kWh)<span class="range-value" id="exportVal">23 kWh</span></label>
-            <input type="range" id="solarExport" min="0" max="50" value="23" oninput="updateR(this,'exportVal',' kWh')">
-            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">Excess power you sell back to the grid</div>
+            <label>Summer: daily solar export (kWh)<span class="range-value" id="exportVal">10 kWh</span></label>
+            <input type="range" id="solarExport" min="0" max="50" value="10" step="0.5" oninput="updateR(this,'exportVal',' kWh')">
+            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">Excess you sell back to grid</div>
         </div>
         <div class="range-group" id="winterExportGroup">
             <label>Winter: daily solar export (kWh)<span class="range-value" id="winterExpVal">0 kWh</span></label>
-            <input type="range" id="winterExport" min="0" max="30" value="0" oninput="updateR(this,'winterExpVal',' kWh')">
-            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;">Usually less or none in winter</div>
+            <input type="range" id="winterExport" min="0" max="30" value="0" step="0.5" oninput="updateR(this,'winterExpVal',' kWh')">
         </div>
 
         <div class="current-plan-box">
-            <h3>Your current plan (optional — for comparison)</h3>
+            <h3>Your current plan (for comparison)</h3>
             <div class="plan-inputs">
                 <div class="form-group">
                     <label>Usage rate (c/kWh)</label>
-                    <input type="number" id="curUsage" placeholder="32.83" step="0.01">
+                    <input type="number" id="curUsage" placeholder="34.31" step="0.01">
                 </div>
                 <div class="form-group">
                     <label>Supply charge (c/day)</label>
-                    <input type="number" id="curSupply" placeholder="118.26" step="0.01">
+                    <input type="number" id="curSupply" placeholder="111.08" step="0.01">
                 </div>
                 <div class="form-group">
                     <label>Feed-in tariff (c/kWh)</label>
@@ -243,7 +253,7 @@
                 </div>
                 <div class="form-group">
                     <label>Provider name</label>
-                    <input type="text" id="curProvider" placeholder="e.g. My Retailer">
+                    <input type="text" id="curProvider" placeholder="e.g. Powershop">
                 </div>
             </div>
         </div>
@@ -275,7 +285,7 @@
 
 <footer>
     <p>Data: ESC Victorian Default Offer 2026-27 (effective 1 July 2026)</p>
-    <p style="margin-top:4px;">BrightGrid — independent, no commissions, no affiliate links</p>
+    <p style="margin-top:4px;">BrightGrid — independent, no commissions</p>
 </footer>
 
 <script>
@@ -283,14 +293,14 @@
 const ZONES = {
     CitiPower:'3000 3001 3002 3003 3004 3005 3006 3008 3010 3011 3012 3013 3020 3021 3025 3028 3029 3031 3032 3039 3040 3041 3042 3052 3053 3054 3065 3066 3067 3068 3070 3101 3121 3122 3123 3124 3125 3126 3127 3141 3142 3143 3144 3145 3146',
     Jemena:'3043 3044 3045 3046 3047 3048 3049 3055 3056 3057 3058 3059 3060 3061 3062 3063 3064 3071 3072 3073 3074 3075 3076 3078 3079 3081 3082 3083 3084 3085 3087 3088 3089 3090 3091 3093 3094 3095',
-    'United Energy':'3102 3103 3104 3105 3106 3107 3108 3109 3110 3111 3112 3113 3114 3115 3116 3117 3118 3119 3120 3128 3129 3130 3131 3132 3133 3134 3135 3136 3137 3138 3139 3140 3147 3148 3149 3150 3151 3152 3153 3154 3155 3156 3157 3158 3159 3160 3161 3162 3163 3164 3165 3166 3167 3168 3169 3170 3171 3172 3173 3174 3175 3176 3177 3178 3179 3180 3181 3182 3183 3184 3185 3186 3187 3188 3189 3190 3191 3192 3193 3194 3195 3196 3197 3198 3199 3200 3201 3202 3204 3205 3206 3207 3930 3931 3933 3934 3936 3937 3938 3939 3940 3941 3942 3943 3944',
+    'United Energy':'3102 3103 3104 3105 3106 3107 3108 3109 3110 3111 3112 3113 3114 3115 3128 3129 3130 3131 3132 3133 3134 3135 3136 3137 3138 3139 3140 3147 3148 3149 3150 3151 3152 3153 3154 3155 3156 3157 3158 3159 3160 3161 3162 3163 3164 3165 3166 3167 3168 3169 3170 3171 3172 3173 3174 3175 3176 3177 3178 3179 3180 3181 3182 3183 3184 3185 3186 3187 3188 3189 3190 3191 3192 3193 3194 3195 3196 3197 3198 3199 3200 3201 3202 3204 3205 3206 3207 3930 3931 3933 3934 3936 3937 3938 3939 3940 3941 3942 3943 3944',
     Powercor:'3211 3212 3213 3214 3215 3216 3217 3218 3219 3220 3221 3222 3223 3224 3225 3226 3227 3228 3230 3231 3232 3233 3234 3235 3236 3237 3238 3239 3240 3241 3242 3243 3249 3250 3251 3260 3264 3265 3266 3267 3268 3269 3270 3271 3272 3273 3274 3275 3276 3277 3278 3279 3280 3281 3282 3283 3284 3285 3286 3287 3289 3292 3293 3294 3300 3301 3302 3303 3304 3305 3309 3310 3311 3312 3314 3315 3317 3318 3319 3321 3322 3323 3324 3325 3328 3329 3330 3331 3332 3333 3334 3335 3336 3337 3338 3340 3341 3342 3345 3350 3351 3352 3353 3354 3355 3356 3357 3358 3360 3361 3363 3364 3370 3371 3373 3374 3375 3377 3378 3379 3380 3381 3384 3385 3387 3388 3390 3391 3392 3393 3395 3396 3399 3400 3401 3407 3409 3412 3413 3414 3415 3418 3419 3420 3421 3423 3424 3427 3428 3429 3430 3431 3432 3433 3434 3435 3437 3438 3440 3441 3442 3443 3444 3446 3447 3448 3449 3450 3451 3453 3458 3460 3461 3462 3463 3464 3465 3467 3468 3469 3472 3475 3477 3478 3480 3482 3483 3485 3487 3488 3489 3490 3491 3494 3496 3498 3500 3501 3505 3515 3516 3517 3518 3520 3521 3522 3523 3525 3527 3529 3530 3531 3533 3537 3540 3542 3544 3546 3549 3550 3551 3555 3556 3557 3558 3559 3561 3562 3563 3564 3565 3566 3567 3568 3570 3571 3572 3573 3575 3576 3579 3580 3581 3583 3584 3585 3586 3588 3589 3590 3591 3594 3595 3596 3597 3599 3607 3608 3610 3612 3614 3616 3618 3620 3621 3622 3623 3624 3629 3630 3631 3633 3634 3635 3636 3637 3638 3639 3640 3641 3643 3644 3646 3647 3649 3658 3659 3660 3662 3663 3664 3665 3666 3669 3670 3671 3672 3673 3675 3677 3678 3679 3682 3683 3685 3687 3688 3689 3690 3691 3694 3695 3697 3698 3699 3700 3701 3705 3707 3708 3709 3711 3712 3713 3714 3715 3717 3718 3719 3720 3722 3723',
-    AusNet:'3750 3751 3752 3753 3754 3755 3756 3757 3758 3759 3760 3761 3762 3763 3765 3766 3767 3770 3775 3777 3778 3779 3780 3781 3782 3783 3785 3786 3787 3788 3789 3791 3793 3795 3796 3797 3799 3800 3802 3803 3804 3805 3806 3807 3808 3809 3810 3812 3813 3814 3815 3816 3818 3820 3821 3822 3823 3824 3825 3831 3833 3835 3840 3841 3842 3844 3847 3850 3851 3852 3854 3856 3858 3860 3862 3864 3865 3869 3870 3871 3873 3874 3875 3878 3880 3882 3885 3886 3887 3888 3889 3890 3891 3892 3893 3895 3896 3898 3900 3902 3903 3904 3909 3910 3911 3912 3913 3915 3916 3918 3919 3920 3921 3922 3923 3925 3926 3927 3928 3929 3945 3946 3950 3951 3953 3954 3956 3957 3958 3959 3960 3962 3964 3965 3966 3967 3971 3975 3976 3977 3978 3979 3980 3981 3984'
+    AusNet:'3116 3117 3118 3119 3120 3750 3751 3752 3753 3754 3755 3756 3757 3758 3759 3760 3761 3762 3763 3765 3766 3767 3770 3775 3777 3778 3779 3780 3781 3782 3783 3785 3786 3787 3788 3789 3791 3793 3795 3796 3797 3799 3800 3802 3803 3804 3805 3806 3807 3808 3809 3810 3812 3813 3814 3815 3816 3818 3820 3821 3822 3823 3824 3825 3831 3833 3835 3840 3841 3842 3844 3847 3850 3851 3852 3854 3856 3858 3860 3862 3864 3865 3869 3870 3871 3873 3874 3875 3878 3880 3882 3885 3886 3887 3888 3889 3890 3891 3892 3893 3895 3896 3898 3900 3902 3903 3904 3909 3910 3911 3912 3913 3915 3916 3918 3919 3920 3921 3922 3923 3925 3926 3927 3928 3929 3945 3946 3950 3951 3953 3954 3956 3957 3958 3959 3960 3962 3964 3965 3966 3967 3971 3975 3976 3977 3978 3979 3980 3981 3984'
 };
 const zoneMap = {};
 Object.entries(ZONES).forEach(([zone, pcs]) => { pcs.split(' ').forEach(pc => { zoneMap[pc] = zone; }); });
 
-// ===== VDO 2026-27 (ESC Official) =====
+// ===== VDO 2026-27 (ESC Official, incl GST) =====
 const VDO = {
     'AusNet':        { supply: 128.24, flat: 31.98 },
     'CitiPower':     { supply: 121.14, flat: 25.96 },
@@ -299,12 +309,16 @@ const VDO = {
     'United Energy': { supply: 119.12, flat: 27.35 }
 };
 
+// Season days
+const SUMMER_DAYS = 151; // Nov-Mar
+const WINTER_DAYS = 214; // Apr-Oct
+
 // ===== MARKET OFFERS =====
 function getOffers(zone) {
     const vdo = VDO[zone];
     if (!vdo) return [];
     return [
-        { provider:'Amber Electric', plan:'SmartShift', type:'Wholesale variable', usage:+(vdo.flat*0.82).toFixed(2), supply:+(vdo.supply*0.85).toFixed(2), feedIn:8.0, note:'Wholesale rates vary by hour' },
+        { provider:'Amber Electric', plan:'SmartShift', type:'Wholesale variable', usage:+(vdo.flat*0.82).toFixed(2), supply:+(vdo.supply*0.85).toFixed(2), feedIn:8.0, note:'Wholesale rates vary hourly' },
         { provider:'Tango Energy', plan:'Home Select', type:'Fixed 12 months', usage:+(vdo.flat*0.87).toFixed(2), supply:+(vdo.supply*0.89).toFixed(2), feedIn:5.5, note:'' },
         { provider:'Momentum Energy', plan:'Smile Power Flexi', type:'Variable', usage:+(vdo.flat*0.88).toFixed(2), supply:+(vdo.supply*0.90).toFixed(2), feedIn:5.2, note:'' },
         { provider:'GloBird Energy', plan:'EasySave', type:'Variable', usage:+(vdo.flat*0.89).toFixed(2), supply:+(vdo.supply*0.88).toFixed(2), feedIn:5.0, note:'' },
@@ -313,21 +327,29 @@ function getOffers(zone) {
         { provider:'Energy Australia', plan:'Total Plan', type:'Variable', usage:+(vdo.flat*0.93).toFixed(2), supply:+(vdo.supply*0.93).toFixed(2), feedIn:5.5, note:'Pay on time discount' },
         { provider:'Origin Energy', plan:'Solar Boost Plus', type:'Fixed benefit', usage:+(vdo.flat*0.95).toFixed(2), supply:+(vdo.supply*0.92).toFixed(2), feedIn:7.0, note:'High feed-in for solar' },
         { provider:'AGL', plan:'Value Saver', type:'Variable', usage:+(vdo.flat*0.96).toFixed(2), supply:+(vdo.supply*0.94).toFixed(2), feedIn:5.0, note:'' },
+        { provider:'Powershop', plan:'Power House', type:'Variable + Powerpacks', usage:+(vdo.flat*1.00).toFixed(2), supply:+(vdo.supply*0.87).toFixed(2), feedIn:3.3, note:'Discounts via prepaid Powerpacks' },
         { provider:'Sumo Energy', plan:'Sumo Assure', type:'Fixed 12 months', usage:+(vdo.flat*0.91).toFixed(2), supply:+(vdo.supply*0.90).toFixed(2), feedIn:3.5, note:'Low feed-in' },
-        { provider:'Victorian Default Offer', plan:'VDO 2026-27 (ESC regulated)', type:'Standing offer', usage:vdo.flat, supply:vdo.supply, feedIn:4.5, note:'Guaranteed maximum price', isVDO:true }
+        { provider:'Victorian Default Offer', plan:'VDO 2026-27 (ESC max)', type:'Standing offer', usage:vdo.flat, supply:vdo.supply, feedIn:4.5, note:'Regulated maximum price', isVDO:true }
     ];
 }
 
-// ===== CALCULATE ANNUAL COST =====
-function calcAnnual(offer, summerGrid, winterGrid, summerExport, winterExport) {
-    const summerDays = 151; // Nov-Mar
-    const winterDays = 214; // Apr-Oct
-
-    const usageCost = (summerGrid * offer.usage / 100 * summerDays) + (winterGrid * offer.usage / 100 * winterDays);
+// ===== CALCULATE =====
+function calcBreakdown(offer, summerGrid, winterGrid, summerExport, winterExport) {
+    const summerUsageCost = summerGrid * offer.usage / 100 * SUMMER_DAYS;
+    const winterUsageCost = winterGrid * offer.usage / 100 * WINTER_DAYS;
     const supplyCost = offer.supply / 100 * 365;
-    const feedInCredit = (summerExport * offer.feedIn / 100 * summerDays) + (winterExport * offer.feedIn / 100 * winterDays);
+    const summerFeedIn = summerExport * offer.feedIn / 100 * SUMMER_DAYS;
+    const winterFeedIn = winterExport * offer.feedIn / 100 * WINTER_DAYS;
+    const totalFeedIn = summerFeedIn + winterFeedIn;
+    const annual = summerUsageCost + winterUsageCost + supplyCost - totalFeedIn;
 
-    return usageCost + supplyCost - feedInCredit;
+    return {
+        summerUsageCost, winterUsageCost, supplyCost, summerFeedIn, winterFeedIn, totalFeedIn, annual,
+        summerUsageKwh: summerGrid * SUMMER_DAYS,
+        winterUsageKwh: winterGrid * WINTER_DAYS,
+        summerExportKwh: summerExport * SUMMER_DAYS,
+        winterExportKwh: winterExport * WINTER_DAYS
+    };
 }
 
 // ===== UI =====
@@ -369,6 +391,11 @@ document.getElementById('postcode').addEventListener('input', function() {
     } else zi.classList.remove('visible');
 });
 
+function toggleBreakdown(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+}
+
 function compare() {
     goToStep(3);
     document.getElementById('loading').style.display = 'block';
@@ -383,7 +410,6 @@ function compare() {
         const summerExport = hasSolar ? parseFloat(document.getElementById('solarExport').value) : 0;
         const winterExport = hasSolar ? parseFloat(document.getElementById('winterExport').value) : 0;
 
-        // Get current plan if provided
         const curUsage = parseFloat(document.getElementById('curUsage').value) || 0;
         const curSupply = parseFloat(document.getElementById('curSupply').value) || 0;
         const curFeedIn = parseFloat(document.getElementById('curFeedIn').value) || 0;
@@ -391,77 +417,86 @@ function compare() {
         const hasCurrentPlan = curUsage > 0 && curSupply > 0;
 
         let offers = getOffers(zone);
-
-        // Add current plan if provided
         if (hasCurrentPlan) {
-            offers.push({
-                provider: curName, plan: 'Your current plan', type: 'Current',
-                usage: curUsage, supply: curSupply, feedIn: curFeedIn,
-                note: '', isCurrent: true
-            });
+            offers.push({ provider: curName, plan: 'Your current plan', type: 'Current', usage: curUsage, supply: curSupply, feedIn: curFeedIn, note: '', isCurrent: true });
         }
 
-        // Calculate costs
+        // Calculate all
         const results = offers.map(offer => {
-            const annual = calcAnnual(offer, summerGrid, winterGrid, summerExport, winterExport);
-            return { ...offer, annualCost: Math.round(annual), monthlyCost: Math.round(annual / 12) };
+            const bd = calcBreakdown(offer, summerGrid, winterGrid, summerExport, winterExport);
+            return { ...offer, ...bd, annualCost: Math.round(bd.annual), monthlyCost: Math.round(bd.annual / 12) };
         });
-
         results.sort((a, b) => a.annualCost - b.annualCost);
 
-        // Find current plan position
         const currentPlan = results.find(r => r.isCurrent);
         const cheapest = results[0];
 
         // Summary
-        let summaryText = results.length + ' plans compared for ' + zone + ' network (postcode ' + postcode + ').';
+        let summary = results.length + ' plans compared for ' + zone + ' network.';
         if (currentPlan) {
             const saving = currentPlan.annualCost - cheapest.annualCost;
-            summaryText += ' You could save $' + saving + '/year by switching to ' + cheapest.provider + '.';
+            summary += ' Switch to ' + cheapest.provider + ' and save $' + saving + '/year ($' + Math.round(saving/12) + '/month).';
         }
-        document.getElementById('resultsSummary').textContent = summaryText;
+        document.getElementById('resultsSummary').textContent = summary;
 
-        // Why expensive / why cheap analysis
+        // Why analysis
         let whyHTML = '';
-        if (currentPlan && currentPlan !== cheapest) {
+        if (currentPlan && currentPlan.annualCost > cheapest.annualCost) {
             const vdo = VDO[zone];
-            whyHTML += '<div class="why-expensive"><h3>Why your current plan costs more:</h3><ul>';
-            if (currentPlan.supply > vdo.supply) whyHTML += '<li>Supply charge ' + currentPlan.supply.toFixed(1) + 'c/day is above VDO max (' + vdo.supply + 'c/day) — you pay $' + Math.round((currentPlan.supply - cheapest.supply) / 100 * 365) + ' more/year just for connection</li>';
-            if (currentPlan.feedIn < cheapest.feedIn) whyHTML += '<li>Feed-in tariff only ' + currentPlan.feedIn + 'c vs ' + cheapest.feedIn + 'c — you lose $' + Math.round((cheapest.feedIn - currentPlan.feedIn) / 100 * summerExport * 151) + '/year in solar credits</li>';
-            if (currentPlan.usage > vdo.flat) whyHTML += '<li>Usage rate ' + currentPlan.usage + 'c/kWh exceeds VDO regulated max (' + vdo.flat + 'c/kWh)</li>';
+            whyHTML += '<div class="why-expensive"><h3>Why ' + currentPlan.provider + ' costs you more:</h3><ul>';
+            if (currentPlan.feedIn < 5) whyHTML += '<li>Feed-in tariff only ' + currentPlan.feedIn + 'c/kWh — you export ' + (summerExport * SUMMER_DAYS).toFixed(0) + ' kWh/year but earn just $' + Math.round(currentPlan.totalFeedIn) + ' back</li>';
+            if (currentPlan.supply > cheapest.supply) whyHTML += '<li>Daily supply charge (' + currentPlan.supply.toFixed(1) + 'c) costs you $' + Math.round(currentPlan.supplyCost) + '/year — $' + Math.round(currentPlan.supplyCost - cheapest.supplyCost) + ' more than cheapest</li>';
+            if (currentPlan.usage > vdo.flat) whyHTML += '<li>Usage rate ' + currentPlan.usage + 'c/kWh exceeds VDO maximum (' + vdo.flat + 'c)</li>';
             whyHTML += '</ul></div>';
 
-            whyHTML += '<div class="why-cheap"><h3>Why ' + cheapest.provider + ' is cheapest for you:</h3><ul>';
-            if (cheapest.feedIn >= 7) whyHTML += '<li>High feed-in tariff (' + cheapest.feedIn + 'c/kWh) — maximises your solar export income</li>';
-            if (cheapest.supply < currentPlan.supply * 0.9) whyHTML += '<li>Lower supply charge (' + cheapest.supply.toFixed(1) + 'c/day) — saves every single day</li>';
-            whyHTML += '<li>For solar+battery homes, feed-in rate and supply charge matter most (you barely use the grid)</li>';
+            whyHTML += '<div class="why-cheap"><h3>Why ' + cheapest.provider + ' saves you the most:</h3><ul>';
+            if (cheapest.feedIn >= 6) whyHTML += '<li>Feed-in ' + cheapest.feedIn + 'c/kWh earns you $' + Math.round(cheapest.totalFeedIn) + '/year for exports (vs $' + Math.round(currentPlan.totalFeedIn) + ' now)</li>';
+            if (cheapest.supply < currentPlan.supply) whyHTML += '<li>Lower supply charge saves $' + Math.round((currentPlan.supply - cheapest.supply)/100*365) + '/year on daily connection fee</li>';
+            whyHTML += '<li>For solar+battery: high feed-in + low supply charge = biggest savings (grid usage rate matters least)</li>';
             whyHTML += '</ul></div>';
         }
         document.getElementById('whyBox').innerHTML = whyHTML;
 
-        // Render cards
+        // Render result cards
         document.getElementById('resultsList').innerHTML = results.map((r, i) => {
             let cardClass = '', badgeHTML = '';
             if (i === 0) { cardClass = 'best'; badgeHTML = '<span class="badge badge-best">Cheapest for you</span> '; }
             if (r.isCurrent) { cardClass = 'current'; badgeHTML = '<span class="badge badge-current">Your Current Plan</span> '; }
-            if (r.isVDO) { badgeHTML = '<span class="badge" style="background:#E3F2FD;color:#1565C0;">VDO Regulated Max</span> '; }
+            if (r.isVDO) { badgeHTML = '<span class="badge" style="background:#E3F2FD;color:#1565C0;">VDO Max</span> '; }
             if (!r.isCurrent && !r.isVDO && i > 0) {
                 const diff = r.annualCost - cheapest.annualCost;
-                if (diff > 0) badgeHTML = '<span class="badge badge-savings">+$' + diff + '/yr vs cheapest</span> ';
+                if (diff > 0) badgeHTML = '<span class="badge badge-savings">+$' + diff + '/yr vs best</span> ';
             }
 
-            const feedInAnnual = Math.round((summerExport * r.feedIn / 100 * 151) + (winterExport * r.feedIn / 100 * 214));
+            const bdId = 'bd_' + i;
+
+            // Build breakdown table
+            const breakdownHTML = '<div class="breakdown" id="' + bdId + '">' +
+                '<table class="breakdown-table">' +
+                '<tr><th colspan="3">Cost Breakdown — ' + r.provider + '</th></tr>' +
+                '<tr><td>Supply charge</td><td class="num">' + (r.supply/100).toFixed(4) + ' x 365 days</td><td class="num debit">$' + r.supplyCost.toFixed(0) + '</td></tr>' +
+                '<tr><td>Summer grid usage</td><td class="num">' + summerGrid + ' kWh x ' + r.usage + 'c x ' + SUMMER_DAYS + ' days</td><td class="num debit">$' + r.summerUsageCost.toFixed(0) + '</td></tr>' +
+                '<tr><td>Winter grid usage</td><td class="num">' + winterGrid + ' kWh x ' + r.usage + 'c x ' + WINTER_DAYS + ' days</td><td class="num debit">$' + r.winterUsageCost.toFixed(0) + '</td></tr>' +
+                '<tr><td>Summer feed-in credit</td><td class="num">' + summerExport + ' kWh x ' + r.feedIn + 'c x ' + SUMMER_DAYS + ' days</td><td class="num credit">-$' + r.summerFeedIn.toFixed(0) + '</td></tr>' +
+                '<tr><td>Winter feed-in credit</td><td class="num">' + winterExport + ' kWh x ' + r.feedIn + 'c x ' + WINTER_DAYS + ' days</td><td class="num credit">-$' + r.winterFeedIn.toFixed(0) + '</td></tr>' +
+                '<tr class="subtotal"><td><strong>Annual total</strong></td><td></td><td class="num"><strong>$' + r.annualCost + '</strong></td></tr>' +
+                '<tr><td>Monthly average</td><td></td><td class="num">$' + r.monthlyCost + '/mo</td></tr>' +
+                '<tr><td>Daily average</td><td></td><td class="num">$' + (r.annualCost/365).toFixed(2) + '/day</td></tr>' +
+                '</table></div>';
 
             return '<div class="result-card ' + cardClass + '">' + badgeHTML +
                 '<div class="result-provider">' + r.provider + '</div>' +
                 '<div class="result-plan">' + r.plan + ' &middot; ' + r.type + (r.note ? ' &middot; ' + r.note : '') + '</div>' +
                 '<div class="result-cost"><span class="result-annual">$' + r.annualCost + ' <small>/year</small></span><span class="result-monthly">~$' + r.monthlyCost + '/mo</span></div>' +
                 '<div class="result-details">' +
-                    '<div class="result-detail"><div class="dt">Usage</div><div class="dd">' + r.usage + 'c/kWh</div></div>' +
-                    '<div class="result-detail"><div class="dt">Supply</div><div class="dd">' + r.supply.toFixed(1) + 'c/day</div></div>' +
-                    '<div class="result-detail"><div class="dt">Feed-in</div><div class="dd">' + r.feedIn + 'c/kWh</div></div>' +
-                    '<div class="result-detail"><div class="dt">FiT Credit</div><div class="dd">-$' + feedInAnnual + '/yr</div></div>' +
-                '</div></div>';
+                    '<div class="result-detail"><div class="dt">Usage</div><div class="dd">' + r.usage + 'c</div></div>' +
+                    '<div class="result-detail"><div class="dt">Supply</div><div class="dd">' + r.supply.toFixed(1) + 'c/d</div></div>' +
+                    '<div class="result-detail"><div class="dt">Feed-in</div><div class="dd">' + r.feedIn + 'c</div></div>' +
+                    '<div class="result-detail"><div class="dt">FiT Credit</div><div class="dd credit">-$' + Math.round(r.totalFeedIn) + '</div></div>' +
+                '</div>' +
+                '<button class="btn-details" onclick="toggleBreakdown('' + bdId + '')">More Details — Full Cost Breakdown</button>' +
+                breakdownHTML +
+            '</div>';
         }).join('');
 
         document.getElementById('loading').style.display = 'none';
