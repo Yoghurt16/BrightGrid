@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BrightGrid — Energy Plan Report</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f7fa; color: #1a1a2e; font-size: 14px; }
+.page { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+h1 { font-size: 1.6rem; font-weight: 800; }
+h2 { font-size: 1.05rem; font-weight: 700; margin: 28px 0 10px; }
+.sub { color: #888; font-size: .85rem; margin-bottom: 28px; }
+
+.winner { background: linear-gradient(135deg,#1a1a2e,#2a3a6e); color: white; border-radius: 14px; padding: 28px; margin-bottom: 24px; }
+.winner h2 { color: white; margin: 0 0 6px; font-size: 1.3rem; }
+.winner .wsub { color: #aab8dd; font-size: .83rem; margin-bottom: 16px; }
+.wgrid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 16px; }
+.wstat { background: rgba(255,255,255,.1); border-radius: 8px; padding: 12px; text-align: center; }
+.wstat .lbl { font-size: .7rem; color: #aab8dd; text-transform: uppercase; letter-spacing: .4px; }
+.wstat .val { font-size: 1.4rem; font-weight: 800; color: #6fcf97; margin-top: 4px; }
+.warn { background: rgba(255,193,7,.15); border: 1px solid rgba(255,193,7,.4); border-radius: 8px; padding: 12px 16px; margin-top: 16px; font-size: .82rem; color: #ffd970; line-height: 1.6; }
+
+table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+th { background: #1a1a2e; color: white; padding: 9px 12px; text-align: left; font-size: .77rem; text-transform: uppercase; letter-spacing: .3px; }
+td { padding: 9px 12px; border-bottom: 1px solid #eef; font-size: .84rem; }
+tr.best td { background: #f0fff4; font-weight: 600; }
+tr.current td { background: #fffbf0; }
+tr.skip td { color: #aaa; font-size: .8rem; }
+.s { color: #1a7a40; font-weight: 700; }
+.r { color: #c62828; font-weight: 700; }
+
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-left: 4px solid #ddd; }
+.card.b { border-left-color: #28a745; }
+.card.g { border-left-color: #007bff; }
+.card.c { border-left-color: #ffc107; }
+.card h3 { font-size: .95rem; margin-bottom: 8px; }
+.rates { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.pill { background: #f0f2f8; border-radius: 6px; padding: 3px 9px; font-size: .74rem; font-weight: 600; }
+.pill.h { background: #e8f0fe; color: #1a3a8a; }
+.mt { width: 100%; font-size: .8rem; border-collapse: collapse; }
+.mt td { padding: 4px 0; border-bottom: none; }
+.mt td:last-child { text-align: right; font-weight: 600; }
+.mt .tot td { border-top: 1px solid #eee; padding-top: 6px; font-weight: 700; }
+.mt .sv td { color: #1a7a40; }
+.mt .eff td { color: #1a3a8a; font-size: .88rem; }
+
+.month-table th { font-size: .73rem; }
+.month-table td { text-align: center; font-size: .82rem; }
+.month-table td:first-child { text-align: left; font-weight: 600; }
+tr.summer td { background: #fffbf0; }
+tr.shoulder td { background: #f0fff4; }
+tr.winter td { background: #f0f4ff; }
+tr.tot-row td { background: #1a1a2e; color: white; font-weight: 700; }
+
+.sens { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
+.sb { background: white; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.sb .sr { font-size: .72rem; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+.sb .sa { font-size: 1.4rem; font-weight: 800; }
+.sb .sd { font-size: .72rem; color: #888; margin-top: 4px; line-height: 1.5; }
+
+.assume { background: white; border-radius: 10px; padding: 18px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.assume table { margin: 0; }
+.assume td { font-size: .83rem; padding: 5px 8px; }
+.assume td:last-child { text-align: right; font-weight: 600; }
+
+.dec { background: white; border-radius: 10px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.dr { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+.di { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+.dt { font-size: .87rem; line-height: 1.6; }
+.dt strong { display: block; font-size: .9rem; margin-bottom: 2px; }
+
+footer { text-align: center; font-size: .74rem; color: #aaa; padding: 20px 0; border-top: 1px solid #eee; margin-top: 8px; }
+@media(max-width:600px) { .wgrid,.cards,.sens { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>⚡ BrightGrid — Energy Plan Report</h1>
+<div class="sub">Hong Liang &middot; Chirnside Park VIC 3116 &middot; AusNet Services &middot; July 2026</div>
+
+<!-- WINNER -->
+<div class="winner">
+  <h2>🏆 Best Option: OVO Energy (with gift card promo)</h2>
+  <div class="wsub">Pay $10/month gift card &rarr; receive $20 credit &rarr; net $10/month saving &middot; Flat rate &middot; Verified July 2026</div>
+  <div class="wgrid">
+    <div class="wstat"><div class="lbl">Effective Annual</div><div class="val">$484.84</div></div>
+    <div class="wstat"><div class="lbl">Monthly Average</div><div class="val">$40.40</div></div>
+    <div class="wstat"><div class="lbl">Saving vs Powershop</div><div class="val">+$186.25/yr</div></div>
+    <div class="wstat"><div class="lbl">Per Month Saving</div><div class="val">+$15.52/mo</div></div>
+  </div>
+  <div class="warn">
+    ⚠️ <strong>Verify before switching:</strong> Confirm the $10&rarr;$20 gift card promo is available <strong>monthly</strong> (not one-time only).<br>
+    If one-time only &rarr; OVO = $604.84/yr (still saves $66.25/yr vs Powershop).<br>
+    If monthly &rarr; OVO = $484.84/yr (saves $186.25/yr &mdash; clear winner by large margin).
+  </div>
+</div>
+
+<!-- FULL RANKING -->
+<h2>Full Plan Ranking — All Verified Plans</h2>
+<table>
+<tr><th>#</th><th>Plan</th><th>Type</th><th>Supply c/day</th><th>Usage c/kWh</th><th>FiT c/kWh</th><th>Base $/yr</th><th>Credits</th><th>Effective $/yr</th><th>vs Powershop</th></tr>
+<tr class="best"><td>1</td><td><strong>OVO Energy (+ promo)</strong></td><td>Flat</td><td>105.02c</td><td>26.18c</td><td>1.00c</td><td>$604.84</td><td>-$120</td><td><strong>$484.84</strong></td><td class="s">SAVE $186.25</td></tr>
+<tr class="best"><td>2</td><td><strong>Alinta Basic</strong></td><td>Flat</td><td>100.02c</td><td>24.95c</td><td>0.04c</td><td>$593.29</td><td>&mdash;</td><td><strong>$593.29</strong></td><td class="s">SAVE $77.80</td></tr>
+<tr><td>3</td><td><strong>OVO Energy (no promo)</strong></td><td>Flat</td><td>105.02c</td><td>26.18c</td><td>1.00c</td><td>$604.84</td><td>&mdash;</td><td><strong>$604.84</strong></td><td class="s">SAVE $66.25</td></tr>
+<tr><td>4</td><td><strong>Momentum Energy</strong></td><td>Flat</td><td>118.69c</td><td>24.97c</td><td>0.90c</td><td>$645.50</td><td>&mdash;</td><td><strong>$645.50</strong></td><td class="s">SAVE $25.59</td></tr>
+<tr class="current"><td>5</td><td><strong>Powershop Power House</strong></td><td>Flat</td><td>118.26c</td><td>32.83c</td><td>3.30c</td><td>$671.09</td><td>&mdash;</td><td><strong>$671.09</strong></td><td>BASELINE (your current)</td></tr>
+<tr class="skip"><td>6</td><td>AGL Plan 1</td><td>ToU</td><td>115.41c</td><td>42.62c peak</td><td>0.55c</td><td>$802.07</td><td>&mdash;</td><td>$802.07</td><td class="r">+$130.98 more</td></tr>
+<tr class="skip"><td>7</td><td>AGL Plan 2</td><td>ToU</td><td>119.46c</td><td>42.61c peak</td><td>0.55c</td><td>$816.76</td><td>&mdash;</td><td>$816.76</td><td class="r">+$145.67 more</td></tr>
+<tr class="skip"><td>8</td><td>AGL Plan 3</td><td>ToU</td><td>128.24c</td><td>47.36c peak</td><td>8.80c</td><td>$737.79</td><td>&mdash;</td><td>$737.79</td><td class="r">+$66.70 more</td></tr>
+<tr class="skip"><td>9</td><td>GloBird Solar Soak</td><td>ToU</td><td>119.90c</td><td>51.70c peak</td><td>3.00c</td><td>$866.43</td><td>&mdash;</td><td>$866.43</td><td class="r">+$195.34 more</td></tr>
+<tr class="skip"><td>10</td><td>Origin Plan 1</td><td>ToU</td><td>119.27c</td><td>44.31c peak</td><td>1.00c</td><td>$823.23</td><td>&mdash;</td><td>$823.23</td><td class="r">+$152.14 more</td></tr>
+<tr class="skip"><td>11</td><td>Origin Plan 2</td><td>ToU</td><td>128.24c</td><td>47.64c peak</td><td>5.00c</td><td>$811.57</td><td>&mdash;</td><td>$811.57</td><td class="r">+$140.48 more</td></tr>
+<tr class="skip"><td>12</td><td>Origin Plan 3</td><td>ToU</td><td>128.24c</td><td>47.64c peak</td><td>1.00c</td><td>$886.53</td><td>&mdash;</td><td>$886.53</td><td class="r">+$215.44 more</td></tr>
+</table>
+
+<!-- PLAN CARDS -->
+<h2>Flat Rate Plans — Cost Breakdown</h2>
+<div class="cards">
+
+<div class="card b">
+  <h3>🥇 OVO Energy (with promo)</h3>
+  <div class="rates">
+    <span class="pill">Supply 105.02c/day</span>
+    <span class="pill h">Usage 26.18c/kWh</span>
+    <span class="pill">FiT 1.00c/kWh</span>
+  </div>
+  <table class="mt">
+    <tr><td>Supply (105.02 &div; 100 &times; 365)</td><td>$383.32</td></tr>
+    <tr><td>Usage (26.18 &div; 100 &times; 918 kWh)</td><td>$240.26</td></tr>
+    <tr><td>FiT credit (1.00 &div; 100 &times; 1,874 kWh)</td><td>&minus;$18.74</td></tr>
+    <tr class="tot"><td>Base annual</td><td>$604.84</td></tr>
+    <tr class="sv"><td>Gift card ($10&rarr;$20 &times; 12 months)</td><td>&minus;$120.00</td></tr>
+    <tr class="eff"><td><strong>Effective annual</strong></td><td><strong>$484.84</strong></td></tr>
+    <tr><td>Monthly average</td><td>$40.40</td></tr>
+    <tr class="sv"><td>vs Powershop</td><td>SAVE $186.25/yr</td></tr>
+  </table>
+</div>
+
+<div class="card g">
+  <h3>🥈 Alinta Basic</h3>
+  <div class="rates">
+    <span class="pill">Supply 100.02c/day</span>
+    <span class="pill h">Usage 24.95c/kWh</span>
+    <span class="pill">FiT 0.04c/kWh</span>
+  </div>
+  <table class="mt">
+    <tr><td>Supply (100.02 &div; 100 &times; 365)</td><td>$365.07</td></tr>
+    <tr><td>Usage (24.95 &div; 100 &times; 918 kWh)</td><td>$228.97</td></tr>
+    <tr><td>FiT credit (0.04 &div; 100 &times; 1,874 kWh)</td><td>&minus;$0.75</td></tr>
+    <tr class="tot"><td>Base annual</td><td>$593.29</td></tr>
+    <tr class="eff"><td><strong>Effective annual</strong></td><td><strong>$593.29</strong></td></tr>
+    <tr><td>Monthly average</td><td>$49.44</td></tr>
+    <tr class="sv"><td>vs Powershop</td><td>SAVE $77.80/yr</td></tr>
+  </table>
+</div>
+
+<div class="card g">
+  <h3>🥉 Momentum Energy</h3>
+  <div class="rates">
+    <span class="pill">Supply 118.69c/day</span>
+    <span class="pill h">Usage 24.97c/kWh</span>
+    <span class="pill">FiT 0.90c/kWh</span>
+  </div>
+  <table class="mt">
+    <tr><td>Supply (118.69 &div; 100 &times; 365)</td><td>$433.22</td></tr>
+    <tr><td>Usage (24.97 &div; 100 &times; 918 kWh)</td><td>$229.15</td></tr>
+    <tr><td>FiT credit (0.90 &div; 100 &times; 1,874 kWh)</td><td>&minus;$16.87</td></tr>
+    <tr class="tot"><td><strong>Effective annual</strong></td><td><strong>$645.50</strong></td></tr>
+    <tr><td>Monthly average</td><td>$53.79</td></tr>
+    <tr class="sv"><td>vs Powershop</td><td>SAVE $25.59/yr</td></tr>
+  </table>
+</div>
+
+<div class="card c">
+  <h3>⚠️ Powershop Power House (current)</h3>
+  <div class="rates">
+    <span class="pill">Supply 118.26c/day</span>
+    <span class="pill h">Usage 32.83c/kWh</span>
+    <span class="pill">FiT 3.30c/kWh</span>
+  </div>
+  <table class="mt">
+    <tr><td>Supply (118.26 &div; 100 &times; 365)</td><td>$431.65</td></tr>
+    <tr><td>Usage (32.83 &div; 100 &times; 918 kWh)</td><td>$301.28</td></tr>
+    <tr><td>FiT credit (3.30 &div; 100 &times; 1,874 kWh)</td><td>&minus;$61.84</td></tr>
+    <tr class="tot"><td><strong>Annual cost</strong></td><td><strong>$671.09</strong></td></tr>
+    <tr><td>Monthly average</td><td>$55.92</td></tr>
+    <tr><td>vs Powershop</td><td>BASELINE</td></tr>
+  </table>
+</div>
+
+</div>
+
+<!-- MONTHLY BREAKDOWN -->
+<h2>Month-by-Month Bill — OVO vs Alinta vs Powershop</h2>
+<table class="month-table">
+<tr><th>Month</th><th>Season</th><th>Grid kWh/day</th><th>Export kWh/day</th><th>OVO $</th><th>Alinta $</th><th>Powershop $</th><th>OVO saves</th></tr>
+<tr class="summer"><td>January</td><td>Summer</td><td>1.5</td><td>10.0</td><td>$41.63</td><td>$42.48</td><td>$41.70</td><td class="s">-$0.07</td></tr>
+<tr class="summer"><td>February</td><td>Summer</td><td>1.5</td><td>10.0</td><td>$37.60</td><td>$38.37</td><td>$37.66</td><td class="s">-$0.06</td></tr>
+<tr class="summer"><td>March</td><td>Summer</td><td>1.5</td><td>10.0</td><td>$41.63</td><td>$42.48</td><td>$41.70</td><td class="s">-$0.07</td></tr>
+<tr class="shoulder"><td>April</td><td>Shoulder</td><td>2.5</td><td>4.0</td><td>$49.94</td><td>$48.67</td><td>$56.14</td><td class="s">-$6.20</td></tr>
+<tr class="winter"><td>May</td><td>Winter</td><td>3.77</td><td>0.0</td><td>$63.15</td><td>$60.17</td><td>$75.03</td><td class="s">-$11.88</td></tr>
+<tr class="winter"><td>June</td><td>Winter</td><td>3.77</td><td>0.0</td><td>$61.12</td><td>$58.22</td><td>$72.61</td><td class="s">-$11.49</td></tr>
+<tr class="winter"><td>July</td><td>Winter</td><td>3.77</td><td>0.0</td><td>$63.15</td><td>$60.17</td><td>$75.03</td><td class="s">-$11.88</td></tr>
+<tr class="winter"><td>August</td><td>Winter</td><td>3.77</td><td>0.0</td><td>$63.15</td><td>$60.17</td><td>$75.03</td><td class="s">-$11.88</td></tr>
+<tr class="shoulder"><td>September</td><td>Shoulder</td><td>2.5</td><td>4.0</td><td>$49.94</td><td>$48.67</td><td>$56.14</td><td class="s">-$6.20</td></tr>
+<tr class="shoulder"><td>October</td><td>Shoulder</td><td>2.5</td><td>4.0</td><td>$51.61</td><td>$50.29</td><td>$58.01</td><td class="s">-$6.40</td></tr>
+<tr class="summer"><td>November</td><td>Summer</td><td>1.5</td><td>10.0</td><td>$40.29</td><td>$41.11</td><td>$40.35</td><td class="s">-$0.06</td></tr>
+<tr class="summer"><td>December</td><td>Summer</td><td>1.5</td><td>10.0</td><td>$41.63</td><td>$42.48</td><td>$41.70</td><td class="s">-$0.07</td></tr>
+<tr class="tot-row"><td>TOTAL</td><td>365 days</td><td>918 kWh/yr</td><td>1,874 kWh/yr</td><td>$604.84</td><td>$593.29</td><td>$671.09</td><td class="s">-$66.25</td></tr>
+</table>
+
+<!-- SENSITIVITY -->
+<h2>Rate Sensitivity — How Much Each 1c Change Is Worth to You</h2>
+<div class="sens">
+  <div class="sb"><div class="sr">FiT (most powerful)</div><div class="sa">$18.74/yr</div><div class="sd">per 1c/kWh change<br>1,874 kWh exported/yr<br><strong>Most impactful for your profile</strong></div></div>
+  <div class="sb"><div class="sr">Usage Rate</div><div class="sa">$9.18/yr</div><div class="sd">per 1c/kWh change<br>918 kWh grid used/yr</div></div>
+  <div class="sb"><div class="sr">Supply Charge</div><div class="sa">$3.65/yr</div><div class="sd">per 1c/day change<br>365 days — fixed cost</div></div>
+</div>
+
+<!-- ASSUMPTIONS -->
+<h2>Data Used in All Calculations</h2>
+<div class="assume">
+<table>
+<tr><td>Summer (Nov–Mar &middot; 151 days)</td><td>Grid 1.5 kWh/day &middot; Export 10.0 kWh/day</td></tr>
+<tr><td>Shoulder (Apr/Sep/Oct &middot; 91 days)</td><td>Grid 2.5 kWh/day &middot; Export 4.0 kWh/day</td></tr>
+<tr><td>Winter (May–Aug &middot; 122 days)</td><td>Grid 3.77 kWh/day &middot; Export 0.0 kWh/day</td></tr>
+<tr><td>Annual grid usage</td><td>918 kWh/yr</td></tr>
+<tr><td>Annual solar export</td><td>1,874 kWh/yr</td></tr>
+<tr><td>Battery / Inverter</td><td>32 kWh battery &middot; 10 kW inverter</td></tr>
+<tr><td>Network distributor</td><td>AusNet Services &middot; Chirnside Park VIC 3116</td></tr>
+<tr><td>All rates verified</td><td>Retailer websites July 2026 &middot; incl. GST</td></tr>
+<tr><td>ToU plans</td><td>Modelled at worst-case peak rate for grid usage (conservative)</td></tr>
+<tr><td>OVO gift card promo</td><td>Pay $10 &rarr; get $20 credit &middot; modelled as monthly = $120/yr net saving</td></tr>
+<tr><td>Plans not yet checked</td><td>Red Energy, Simply Energy, Energy Locals, Nectr, Amber Electric</td></tr>
+</table>
+</div>
+
+<!-- DECISION -->
+<h2>Should You Switch? — Decision Guide</h2>
+<div class="dec">
+  <div class="dr"><div class="di">✅</div><div class="dt"><strong>Switch to OVO if the gift card promo is monthly</strong>Effective $484.84/yr — saves $186.25/yr ($15.52/month). Over 3 years: $558 back in your pocket. Call OVO to confirm promo availability before switching.</div></div>
+  <div class="dr"><div class="di">✅</div><div class="dt"><strong>Switch to Alinta for the simplest no-conditions deal</strong>$593.29/yr — saves $77.80/yr ($6.48/month). No gift cards, no conditions. Lowest supply + usage rates of any verified plan. Best set-and-forget option.</div></div>
+  <div class="dr"><div class="di">⚠️</div><div class="dt"><strong>OVO without promo is still a solid choice</strong>$604.84/yr — saves $66.25/yr vs Powershop regardless of gift cards.</div></div>
+  <div class="dr"><div class="di">❌</div><div class="dt"><strong>Stay on Powershop only if...</strong>You value their app/portal, or they offer a price-match to a competitor's rates. Currently the most expensive verified flat rate plan.</div></div>
+  <div class="dr"><div class="di">🔍</div><div class="dt"><strong>Still to check: Red Energy, Simply Energy, Energy Locals, Nectr, Amber Electric</strong>Any flat plan with FiT &ge; 4c + Usage &le; 30c/kWh would beat all current options. Fastest way: visit compare.energy.vic.gov.au — enter address once, all retailers shown simultaneously.</div></div>
+</div>
+
+<footer>BrightGrid Report &middot; Hong Liang &middot; Chirnside Park VIC 3116 &middot; July 2026 &middot; All figures are estimates based on your seasonal usage profile. Verify all rates directly with retailers before switching.</footer>
+</div>
+</body>
+</html>
