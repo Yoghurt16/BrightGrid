@@ -1,384 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrightGrid — Compare Electricity Plans in Victoria</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        :root{--sun-yellow:#FFD600;--sun-light:#FFF8E1;--sun-warm:#FFAB00;--sun-orange:#FF8F00;--sun-glow:#FFF9C4;--white:#FFF;--dark:#212121;--gray:#616161;--light-gray:#F5F5F5;--success:#43A047;--danger:#E53935;--radius:16px}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--white);color:var(--dark);line-height:1.6}
-        header{background:linear-gradient(135deg,var(--sun-yellow),var(--sun-warm),var(--sun-orange));padding:24px 24px 20px;text-align:center;box-shadow:0 4px 20px rgba(255,143,0,.25);position:relative;overflow:hidden}
-        header::before{content:'';position:absolute;top:-50px;right:-50px;width:150px;height:150px;background:rgba(255,255,255,.15);border-radius:50%}
-        header h1{font-size:1.8rem;font-weight:800;color:var(--dark);position:relative}
-        header p{font-size:.9rem;color:var(--dark);opacity:.75;margin-top:4px;position:relative}
-        .version-tag{font-size:.6rem;opacity:.5;position:relative}
-        .sun-icon{font-size:2rem;display:block;margin-bottom:4px}
-        .progress-bar{display:flex;justify-content:center;gap:4px;padding:14px 16px;background:var(--sun-light)}
-        .progress-step{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--gray);opacity:.4;transition:.3s}
-        .progress-step.active{opacity:1;color:var(--dark)}
-        .progress-step.completed{opacity:1;color:var(--success)}
-        .step-dot{width:30px;height:30px;border-radius:50%;background:#E0E0E0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:var(--white);transition:.3s}
-        .progress-step.active .step-dot{background:var(--sun-yellow);color:var(--dark);box-shadow:0 2px 10px rgba(255,214,0,.5)}
-        .progress-step.completed .step-dot{background:var(--success)}
-        .step-connector{width:20px;height:2px;background:#E0E0E0;margin:0 2px}
-        main{max-width:640px;margin:0 auto;padding:24px 20px 100px}
-        .section{display:none;animation:fadeIn .4s ease}
-        .section.active{display:block}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        .section-title{font-size:1.4rem;font-weight:700;margin-bottom:6px}
-        .section-desc{font-size:.88rem;color:var(--gray);margin-bottom:24px;line-height:1.5}
-        .form-group{margin-bottom:18px}
-        .form-group label{display:block;font-size:.82rem;font-weight:600;margin-bottom:6px}
-        .form-group input,.form-group select{width:100%;padding:13px 16px;border:2px solid #E0E0E0;border-radius:12px;font-size:1rem;transition:.2s;background:var(--white)}
-        .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--sun-warm);box-shadow:0 0 0 4px rgba(255,171,0,.12)}
-        .hint{font-size:.73rem;color:var(--gray);margin-top:4px}
-        .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--sun-glow);border-radius:12px;margin-bottom:14px}
-        .toggle-row label{font-weight:600;font-size:.9rem;margin:0}
-        .toggle{position:relative;width:50px;height:26px;flex-shrink:0}
-        .toggle input{opacity:0;width:0;height:0}
-        .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#BDBDBD;border-radius:26px;transition:.3s}
-        .toggle-slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-        .toggle input:checked+.toggle-slider{background:var(--sun-warm)}
-        .toggle input:checked+.toggle-slider:before{transform:translateX(24px)}
-        .range-group{margin-bottom:18px}
-        .range-group label{display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;margin-bottom:8px}
-        .range-value{color:var(--sun-orange);font-weight:700}
-        input[type="range"]{width:100%;height:6px;border-radius:3px;background:#E0E0E0;outline:none;-webkit-appearance:none;appearance:none}
-        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--sun-yellow);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-        .info-box{background:var(--sun-glow);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.82rem;line-height:1.5}
-        .info-box strong{color:var(--sun-orange)}
-        .scenario-box{background:var(--light-gray);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.8rem;line-height:1.5;border-left:4px solid var(--sun-warm)}
-        .scenario-box strong{color:var(--dark)}
-        .current-plan-box{background:#FFF3E0;border:2px solid var(--sun-warm);border-radius:12px;padding:16px;margin-bottom:20px}
-        .current-plan-box h3{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--sun-orange)}
-        .plan-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .plan-inputs .form-group{margin-bottom:0}
-        .plan-inputs input{padding:10px 12px;font-size:.9rem}
-        .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:1rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:.2s;width:100%}
-        .btn-primary{background:linear-gradient(135deg,var(--sun-yellow),var(--sun-warm));color:var(--dark);box-shadow:0 4px 16px rgba(255,171,0,.3)}
-        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,171,0,.4)}
-        .btn-secondary{background:var(--light-gray);color:var(--dark)}
-        .btn-row{display:flex;gap:12px;margin-top:24px}
-        .btn-row .btn{flex:1}
-        .result-card{background:var(--white);border:2px solid #E8E8E8;border-radius:var(--radius);padding:18px;margin-bottom:12px;position:relative}
-        .result-card.best{border-color:var(--sun-yellow);box-shadow:0 4px 24px rgba(255,214,0,.2)}
-        .result-card.current{border-color:var(--danger);border-style:dashed;background:#FFFBFB}
-        .badge{display:inline-block;font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-        .badge-best{background:var(--sun-yellow);color:var(--dark)}
-        .badge-current{background:#FFEBEE;color:#C62828}
-        .badge-savings{background:#E8F5E9;color:#2E7D32}
-        .badge-gift{background:#E8F5E9;color:#1B5E20}
-        .badge-freehrs{background:#E3F2FD;color:#0D47A1}
-        .result-provider{font-size:1.05rem;font-weight:700}
-        .result-plan{font-size:.8rem;color:var(--gray);margin-bottom:8px}
-        .result-cost{display:flex;justify-content:space-between;align-items:baseline}
-        .result-annual{font-size:1.5rem;font-weight:800}
-        .result-annual small{font-size:.75rem;font-weight:400;color:var(--gray)}
-        .result-monthly{font-size:.85rem;color:var(--gray)}
-        .result-details{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid #F0F0F0}
-        .result-detail{text-align:center}
-        .result-detail .dt{font-size:.62rem;color:var(--gray);text-transform:uppercase}
-        .result-detail .dd{font-size:.82rem;font-weight:700;margin-top:1px}
-        .btn-details{display:block;width:100%;margin-top:10px;padding:9px;background:var(--sun-light);border:1px solid #E0E0E0;border-radius:10px;font-size:.78rem;font-weight:600;color:var(--sun-orange);cursor:pointer;transition:.2s;text-align:center}
-        .btn-details:hover{background:var(--sun-glow);border-color:var(--sun-warm)}
-        .breakdown{display:none;margin-top:10px;padding:12px;background:var(--light-gray);border-radius:12px}
-        .breakdown.open{display:block}
-        .breakdown-table{width:100%;border-collapse:collapse;font-size:.76rem}
-        .breakdown-table th{text-align:left;padding:5px 6px;background:var(--sun-glow);font-weight:700;font-size:.68rem;text-transform:uppercase;color:var(--gray)}
-        .breakdown-table td{padding:5px 6px;border-bottom:1px solid #E8E8E8}
-        .breakdown-table tr:last-child td{border-bottom:none;font-weight:700}
-        .breakdown-table .num{text-align:right;font-variant-numeric:tabular-nums}
-        .breakdown-table .credit{color:var(--success)}
-        .why-box{border-radius:12px;padding:14px 16px;margin-bottom:16px}
-        .why-expensive{background:#FFF3E0;border-left:4px solid var(--danger)}
-        .why-cheap{background:#E8F5E9;border-left:4px solid var(--success)}
-        .why-box h3{font-size:.88rem;font-weight:700;margin-bottom:6px}
-        .why-expensive h3{color:var(--danger)}
-        .why-cheap h3{color:var(--success)}
-        .why-box ul{list-style:none;padding:0}
-        .why-box li{font-size:.8rem;padding:3px 0 3px 18px;position:relative}
-        .why-expensive li::before{content:"\2717";position:absolute;left:0;color:var(--danger);font-weight:700}
-        .why-cheap li::before{content:"\2713";position:absolute;left:0;color:var(--success);font-weight:700}
-        .margin-box{background:#F3E5F5;border:2px solid #9C27B0;border-radius:12px;padding:16px;margin-bottom:20px}
-        .margin-box h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:#6A1B9A}
-        .margin-box p{font-size:.82rem;line-height:1.5;margin-bottom:8px}
-        .margin-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
-        .margin-table th{text-align:left;padding:6px 8px;background:#EDE7F6;font-weight:700;color:#4A148C}
-        .margin-table td{padding:6px 8px;border-bottom:1px solid #E0E0E0}
-        .margin-table .num{text-align:right}
-        .margin-table .win{background:#E8F5E9;font-weight:700}
-        .free-hrs-box{background:#E3F2FD;border:2px solid #1565C0;border-radius:12px;padding:16px;margin-bottom:20px}
-        .free-hrs-box h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:#0D47A1}
-        .free-hrs-box p{font-size:.82rem;line-height:1.5;margin-bottom:6px}
-        .free-hrs-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
-        .free-hrs-table th{text-align:left;padding:6px 8px;background:#BBDEFB;font-weight:700;color:#0D47A1}
-        .free-hrs-table td{padding:6px 8px;border-bottom:1px solid #E0E0E0}
-        .free-hrs-table .num{text-align:right}
-        .loading{text-align:center;padding:60px 20px}
-        .spinner{width:48px;height:48px;border:4px solid #E0E0E0;border-top-color:var(--sun-yellow);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        footer{text-align:center;padding:20px;font-size:.72rem;color:var(--gray);border-top:1px solid #F0F0F0}
-        @media(max-width:480px){header h1{font-size:1.4rem}main{padding:16px 14px 80px}.result-details{grid-template-columns:repeat(2,1fr)}.progress-step span{display:none}.plan-inputs{grid-template-columns:1fr}.btn-row{flex-direction:column}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrightGrid — Electricity Plan Calculator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #1a1a2e; line-height: 1.5; }
+
+/* HEADER */
+header { background: linear-gradient(135deg, #1a1a2e 0%, #2a3a6e 100%); color: white; padding: 28px 24px 24px; text-align: center; }
+header h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; }
+header p { font-size: 0.88rem; color: #aab8dd; margin-top: 6px; }
+
+/* LAYOUT */
+.container { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* CARDS */
+.card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 1px 5px rgba(0,0,0,0.07); margin-bottom: 20px; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.card-desc { font-size: 0.8rem; color: #888; margin-bottom: 18px; }
+.tag { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: #e8f0fe; color: #3355bb; padding: 2px 8px; border-radius: 20px; }
+
+/* SEASON BLOCKS */
+.season-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.season-block { border-radius: 8px; padding: 14px; }
+.season-block.summer { background: #fff8e8; border: 1.5px solid #ffd070; }
+.season-block.shoulder { background: #f0fdf4; border: 1.5px solid #86efac; }
+.season-block.winter { background: #eff6ff; border: 1.5px solid #93c5fd; }
+.season-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.summer .season-label { color: #b45309; }
+.shoulder .season-label { color: #15803d; }
+.winter .season-label { color: #1d4ed8; }
+
+/* PLAN ROWS */
+.plan-row { border: 1.5px solid #e8eaf0; border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative; }
+.plan-row:first-child { border-color: #ffc107; background: #fffbf0; }
+.plan-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.plan-name-row input[type=text] { flex: 1; font-size: 0.9rem; font-weight: 600; }
+.plan-fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.remove-btn { background: none; border: none; color: #ccc; font-size: 1.1rem; cursor: pointer; padding: 0 4px; }
+.remove-btn:hover { color: #e53935; }
+.baseline-badge { font-size: 0.65rem; font-weight: 700; background: #ffc107; color: #7a4f00; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+
+/* FORM FIELDS */
+.field { margin-bottom: 0; }
+.field label { display: block; font-size: 0.72rem; color: #666; margin-bottom: 4px; font-weight: 600; }
+.field input { width: 100%; padding: 8px 10px; border: 1.5px solid #dde2ee; border-radius: 7px; font-size: 0.88rem; color: #1a1a2e; background: white; transition: border-color 0.2s; }
+.field input:focus { outline: none; border-color: #3355bb; }
+.field .hint { font-size: 0.68rem; color: #aaa; margin-top: 3px; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: #1a1a2e; color: white; }
+.btn-primary:hover { background: #2a2a4e; }
+.btn-secondary { background: #f0f2f8; color: #1a1a2e; font-size: 0.85rem; padding: 9px 18px; }
+.btn-secondary:hover { background: #e0e4f0; }
+.btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+
+/* ADD PLAN */
+.add-plan-btn { width: 100%; padding: 12px; border: 2px dashed #c8d0e8; border-radius: 10px; background: none; color: #6677aa; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
+.add-plan-btn:hover { border-color: #3355bb; color: #3355bb; background: #f0f4ff; }
+
+/* RESULTS */
+#results { display: none; }
+.winner-banner { background: linear-gradient(135deg, #1a1a2e, #2a3a6e); color: white; border-radius: 12px; padding: 26px; margin-bottom: 20px; }
+.winner-banner h2 { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+.winner-banner .wsub { font-size: 0.82rem; color: #aab8dd; margin-bottom: 18px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat-box { background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; text-align: center; }
+.stat-box .slabel { font-size: 0.68rem; color: #aab8dd; text-transform: uppercase; letter-spacing: 0.4px; }
+.stat-box .sval { font-size: 1.3rem; font-weight: 800; color: #6fcf97; margin-top: 4px; }
+.winner-note { background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.35); border-radius: 8px; padding: 11px 14px; margin-top: 14px; font-size: 0.81rem; color: #ffd970; line-height: 1.6; }
+
+/* RESULTS TABLE */
+.results-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.results-table th { background: #1a1a2e; color: white; padding: 9px 12px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }
+.results-table td { padding: 9px 12px; border-bottom: 1px solid #eef; }
+.results-table tr.rank-1 td { background: #f0fff4; font-weight: 600; }
+.results-table tr.rank-base td { background: #fffbf0; }
+.save-pos { color: #1a7a40; font-weight: 700; }
+.save-neg { color: #c62828; font-weight: 700; }
+
+/* DETAIL CARDS */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.detail-card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid #dde; }
+.detail-card.rank-1 { border-left-color: #28a745; }
+.detail-card.rank-2 { border-left-color: #007bff; }
+.detail-card.rank-3 { border-left-color: #fd7e14; }
+.detail-card.rank-base { border-left-color: #ffc107; }
+.detail-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; }
+.rate-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pill { background: #f0f2f8; border-radius: 6px; padding: 3px 9px; font-size: 0.72rem; font-weight: 600; }
+.pill.usage-pill { background: #e8f0fe; color: #1a3a8a; }
+.cost-lines { font-size: 0.8rem; }
+.cost-line { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #f5f5f5; }
+.cost-line:last-child { border-bottom: none; font-weight: 700; font-size: 0.88rem; padding-top: 6px; }
+.cost-line .credit { color: #1a7a40; }
+.cost-line .saving { color: #1a7a40; font-weight: 700; }
+
+/* MONTH TABLE */
+.month-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 20px; }
+.month-table th { background: #f0f2f8; padding: 7px 10px; text-align: center; font-size: 0.72rem; color: #555; border-bottom: 2px solid #dde; }
+.month-table td { padding: 6px 10px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+.month-table td:first-child { text-align: left; font-weight: 600; }
+tr.s-row td { background: #fffbf0; }
+tr.sh-row td { background: #f0fff4; }
+tr.w-row td { background: #eff6ff; }
+tr.total-row td { background: #1a1a2e; color: white; font-weight: 700; }
+
+/* SENSITIVITY */
+.sens-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+.sens-box { background: white; border-radius: 8px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.sens-box .slb { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.sens-box .sval { font-size: 1.35rem; font-weight: 800; }
+.sens-box .sdesc { font-size: 0.7rem; color: #888; margin-top: 4px; line-height: 1.5; }
+
+/* SECTION HEADERS */
+.section-header { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #888; margin: 24px 0 10px; }
+
+/* PRINT */
+@media print { header, .card:not(#results .card), .btn-row, .add-plan-btn { display: none; } #results { display: block !important; } }
+@media(max-width:600px) { .two-col, .three-col, .season-grid, .stats-grid, .detail-grid, .sens-grid, .plan-fields { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
-<header><div class="sun-icon">&#9728;&#65039;</div><h1>BrightGrid</h1><p>Compare electricity plans — see who saves you the most</p><div class="version-tag">v8</div></header>
-<div class="progress-bar">
-    <div class="progress-step active" data-step="1"><div class="step-dot">1</div><span>Your Usage</span></div>
-    <span class="step-connector"></span>
-    <div class="progress-step" data-step="2"><div class="step-dot">2</div><span>Your Plan</span></div>
-    <span class="step-connector"></span>
-    <div class="progress-step" data-step="3"><div class="step-dot">3</div><span>Compare</span></div>
+
+<header>
+  <h1>⚡ BrightGrid</h1>
+  <p>Enter your plan rates → get a full annual cost report instantly</p>
+</header>
+
+<div class="container">
+
+  <!-- STEP 1: USAGE PROFILE -->
+  <div class="card">
+    <div class="card-title">Your Usage Profile <span class="tag">From your bills</span></div>
+    <div class="card-desc">Enter your average daily grid usage and solar export for each season. Check your past bills or inverter app.</div>
+    <div class="season-grid">
+      <div class="season-block summer">
+        <div class="season-label">☀ Summer — Nov to Mar (151 days)</div>
+        <div class="field"><label>Grid usage (kWh/day)</label><input type="number" id="s_grid" value="1.5" step="0.1" min="0"><div class="hint">How much you draw from grid daily</div></div>
+        <div class="field" style="margin-top:10px"><label>Solar export (kWh/day)</label><input type="number" id="s_export" value="10.0" step="0.1" min="0"><div class="hint">How much you sell back</div></div>
+      </div>
+      <div class="season-block shoulder">
+        <div class="season-label">🍂 Shoulder — Apr, Sep, Oct (91 days)</div>
+        <div class="field"><label>Grid usage (kWh/day)</label><input type="number" id="sh_grid" value="2.5" step="0.1" min="0"></div>
+        <div class="field" style="margin-top:10px"><label>Solar export (kWh/day)</label><input type="number" id="sh_export" value="4.0" step="0.1" min="0"></div>
+      </div>
+      <div class="season-block winter">
+        <div class="season-label">❄ Winter — May to Aug (122 days)</div>
+        <div class="field"><label>Grid usage (kWh/day)</label><input type="number" id="w_grid" value="3.77" step="0.01" min="0"></div>
+        <div class="field" style="margin-top:10px"><label>Solar export (kWh/day)</label><input type="number" id="w_export" value="0.0" step="0.1" min="0"></div>
+      </div>
+    </div>
+    <div style="margin-top:14px; padding:11px 14px; background:#f0f2f8; border-radius:8px; font-size:0.82rem; color:#444;">
+      Annual totals: Grid <strong id="lbl_grid">—</strong> kWh &nbsp;|&nbsp; Export <strong id="lbl_export">—</strong> kWh &nbsp;|&nbsp; 365 days
+    </div>
+  </div>
+
+  <!-- STEP 2: PLANS -->
+  <div class="card">
+    <div class="card-title">Your Plans <span class="tag">Enter exact rates from retailer</span></div>
+    <div class="card-desc">Add your current plan first, then any plans you are considering. Rates must be inc. GST. Check each retailer's website using your address.</div>
+
+    <div id="plans-container">
+      <!-- Plan 1 — baseline (current) -->
+      <div class="plan-row" id="plan-0">
+        <div class="plan-name-row">
+          <input type="text" id="p0_name" value="Powershop Power House" class="field" style="border:1.5px solid #dde2ee;border-radius:7px;padding:8px 10px;">
+          <span class="baseline-badge">Your current plan</span>
+        </div>
+        <div class="plan-fields">
+          <div class="field"><label>Supply (c/day)</label><input type="number" id="p0_supply" value="118.26" step="0.01" min="0"><div class="hint">Daily service charge</div></div>
+          <div class="field"><label>Usage (c/kWh)</label><input type="number" id="p0_usage" value="32.83" step="0.01" min="0"><div class="hint">Flat rate per kWh</div></div>
+          <div class="field"><label>FiT (c/kWh)</label><input type="number" id="p0_fit" value="3.30" step="0.01" min="0"><div class="hint">Feed-in tariff</div></div>
+          <div class="field"><label>Credits ($/yr)</label><input type="number" id="p0_credits" value="0" step="1" min="0"><div class="hint">Gift cards, bonuses</div></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="add-plan-btn" onclick="addPlan()">+ Add another plan to compare</button>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calculate()">⚡ Calculate &amp; Generate Report</button>
+      <button class="btn btn-secondary" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <div class="section-header">Report Results</div>
+
+    <!-- Winner banner -->
+    <div id="winner-banner" class="winner-banner"></div>
+
+    <!-- Ranking table -->
+    <div class="card">
+      <div class="card-title">Full Ranking — All Plans</div>
+      <div style="overflow-x:auto"><table class="results-table" id="rank-table"><thead></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- Detail cards -->
+    <div class="card">
+      <div class="card-title">Cost Breakdown — Per Plan</div>
+      <div class="detail-grid" id="detail-grid"></div>
+    </div>
+
+    <!-- Monthly table -->
+    <div class="card">
+      <div class="card-title">Month-by-Month Bills</div>
+      <div style="overflow-x:auto"><table class="month-table" id="month-table"></table></div>
+    </div>
+
+    <!-- Sensitivity -->
+    <div class="card">
+      <div class="card-title">Rate Sensitivity — How Much Each 1c Change Is Worth You</div>
+      <div class="sens-grid" id="sens-grid"></div>
+    </div>
+
+    <!-- Assumptions -->
+    <div class="card">
+      <div class="card-title">Data Used in This Report</div>
+      <div style="font-size:0.82rem; color:#555; line-height:1.9;" id="assumptions-box"></div>
+    </div>
+
+    <div class="btn-row" style="margin-top:4px;">
+      <button class="btn btn-secondary" onclick="window.print()">🖨 Print / Save as PDF</button>
+      <button class="btn btn-secondary" onclick="scrollTo(0,0)">↑ Back to top</button>
+    </div>
+
+  </div>
 </div>
-<main>
-    <div class="section active" id="step1">
-        <h2 class="section-title">How do you use electricity?</h2>
-        <p class="section-desc">Tell us about your home setup. We compare every plan against your real usage pattern.</p>
-        <div class="toggle-row"><label>Solar panels installed?</label><div class="toggle"><input type="checkbox" id="hasSolar" onchange="updateSetup()"><span class="toggle-slider"></span></div></div>
-        <div id="batterySection" style="display:none"><div class="toggle-row"><label>Battery storage?</label><div class="toggle"><input type="checkbox" id="hasBattery" onchange="updateSetup()"><span class="toggle-slider"></span></div></div></div>
-        <div class="scenario-box" id="scenarioBox"></div>
-        <div class="info-box"><strong>VIC seasons:</strong> Summer = Nov-Mar (151 days) | Winter = Apr-Oct (214 days). Only count what you draw <strong>from the grid</strong>.</div>
-        <div class="range-group"><label>Summer — daily kWh from grid<span class="range-value" id="summerVal">15 kWh</span></label><input type="range" id="summerGrid" min="0" max="50" value="15" step="0.5" oninput="updateR(this,'summerVal',' kWh')"><div class="hint" id="summerHint"></div></div>
-        <div class="range-group"><label>Winter — daily kWh from grid<span class="range-value" id="winterVal">20 kWh</span></label><input type="range" id="winterGrid" min="0" max="50" value="20" step="0.5" oninput="updateR(this,'winterVal',' kWh')"><div class="hint" id="winterHint"></div></div>
-        <div id="exportSection" style="display:none">
-            <div class="range-group"><label>Summer — daily solar export (kWh)<span class="range-value" id="exportVal">10 kWh</span></label><input type="range" id="solarExport" min="0" max="50" value="10" step="0.5" oninput="updateR(this,'exportVal',' kWh')"><div class="hint">Excess solar you sell back to grid</div></div>
-            <div class="range-group"><label>Winter — daily solar export (kWh)<span class="range-value" id="winterExpVal">0 kWh</span></label><input type="range" id="winterExport" min="0" max="30" value="0" step="0.5" oninput="updateR(this,'winterExpVal',' kWh')"><div class="hint">Usually less or zero in winter</div></div>
-        </div>
-        <div id="batteryChargeSection" style="display:none">
-            <div class="range-group"><label>Battery charge rate (kW)<span class="range-value" id="chargeRateVal">5 kW</span></label><input type="range" id="chargeRate" min="1" max="15" value="5" step="0.5" oninput="updateR(this,'chargeRateVal',' kW')"><div class="hint">Your battery's max charge speed — used to calculate free hours value</div></div>
-        </div>
-        <button class="btn btn-primary" onclick="goToStep(2)">Next — Your Current Plan</button>
-    </div>
-    <div class="section" id="step2">
-        <h2 class="section-title">Your current electricity plan</h2>
-        <p class="section-desc">Enter the rates from your latest bill so we can show exactly how much you save by switching.</p>
-        <div class="info-box"><strong>Where to find these:</strong> On your bill look for "Usage charges" (c/kWh), "Daily supply charge" (c/day), and "Solar FIT" or "Feed-in" (c/kWh).</div>
-        <div class="current-plan-box"><h3>Your current rates</h3><div class="plan-inputs">
-            <div class="form-group"><label>Usage rate (c/kWh)</label><input type="number" id="curUsage" placeholder="e.g. 34.31" step="0.01"></div>
-            <div class="form-group"><label>Supply charge (c/day)</label><input type="number" id="curSupply" placeholder="e.g. 111.08" step="0.01"></div>
-            <div class="form-group"><label>Feed-in tariff (c/kWh)</label><input type="number" id="curFeedIn" placeholder="e.g. 3.3" step="0.01"></div>
-            <div class="form-group"><label>Provider name</label><input type="text" id="curProvider" placeholder="e.g. Powershop"></div>
-        </div></div>
-        <div class="btn-row"><button class="btn btn-secondary" onclick="goToStep(1)">Back</button><button class="btn btn-primary" onclick="compare()">Compare All Plans</button></div>
-    </div>
-    <div class="section" id="step3">
-        <div class="loading" id="loading"><div class="spinner"></div><p>Calculating...</p></div>
-        <div id="results" style="display:none">
-            <h2 class="section-title">Your comparison results</h2>
-            <p class="section-desc" id="resultsSummary"></p>
-            <div id="freeHoursBox"></div>
-            <div id="whyBox"></div>
-            <div id="marginBox"></div>
-            <div id="resultsList"></div>
-            <div class="btn-row"><button class="btn btn-secondary" onclick="goToStep(1)">Change Usage</button><button class="btn btn-primary" onclick="goToStep(2)">Change Plan</button></div>
-        </div>
-    </div>
-</main>
-<footer><p>Rates from retailer fact sheets & ESC VDO 2026-27. Updated July 2026. BrightGrid is independent — no commissions.</p></footer>
+
 <script>
-var PLANS=[
-    {provider:'Amber Electric',plan:'SmartShift',type:'Wholesale variable',usage:22.00,supply:98.00,feedIn:8.0,note:'Avg wholesale rate. Varies hourly.',giftCard:0,freeHours:0},
-    {provider:'Tango Energy',plan:'Home Select',type:'Fixed 12 months',usage:24.50,supply:105.00,feedIn:5.5,note:'',giftCard:75,freeHours:0},
-    {provider:'1st Energy',plan:'Residential Saver',type:'Variable',usage:24.80,supply:102.00,feedIn:5.5,note:'Mozo award winner 2025-26',giftCard:50,freeHours:0},
-    {provider:'Nectr',plan:'Nectr Home',type:'Fixed 12 months',usage:25.00,supply:99.50,feedIn:5.8,note:'Stanwell-owned, low supply charge',giftCard:0,freeHours:0},
-    {provider:'Momentum Energy',plan:'Smile Power Flexi',type:'Variable',usage:25.20,supply:107.00,feedIn:5.2,note:'',giftCard:0,freeHours:0},
-    {provider:'GloBird Energy',plan:'EasySave',type:'Variable',usage:25.80,supply:100.50,feedIn:5.0,note:'No lock-in contract',giftCard:0,freeHours:3},
-    {provider:'CovaU',plan:'Power Saver',type:'Variable',usage:25.50,supply:103.00,feedIn:5.0,note:'',giftCard:0,freeHours:0},
-    {provider:'Alinta Energy',plan:'Home Deal',type:'Fixed 12 months',usage:26.00,supply:108.00,feedIn:5.0,note:'',giftCard:100,freeHours:0},
-    {provider:'Energy Locals',plan:'Resident Plan',type:'Variable',usage:25.90,supply:104.50,feedIn:5.5,note:'Apartment-focused, award-winning',giftCard:0,freeHours:0},
-    {provider:'Red Energy',plan:'Living Energy Saver',type:'Fixed 12 months',usage:26.50,supply:101.00,feedIn:6.0,note:'Snowy Hydro owned',giftCard:100,freeHours:0},
-    {provider:'Lumo Energy',plan:'Basic',type:'Variable',usage:27.20,supply:108.50,feedIn:4.5,note:'Snowy Hydro owned, same parent as Red',giftCard:0,freeHours:0},
-    {provider:'Simply Energy',plan:'Simply Plus',type:'Variable',usage:27.80,supply:106.00,feedIn:5.0,note:'Engie owned',giftCard:120,freeHours:0},
-    {provider:'Energy Australia',plan:'Total Plan',type:'Variable',usage:27.00,supply:110.00,feedIn:5.5,note:'Pay on time discount',giftCard:0,freeHours:2},
-    {provider:'Origin Energy',plan:'Solar Boost Plus',type:'Fixed benefit',usage:27.50,supply:109.00,feedIn:7.0,note:'High feed-in for solar',giftCard:0,freeHours:0},
-    {provider:'Dodo Power & Gas',plan:'Dodo Electricity',type:'Variable',usage:28.50,supply:109.00,feedIn:4.5,note:'Bundle with internet for discount',giftCard:50,freeHours:0},
-    {provider:'AGL',plan:'Value Saver',type:'Variable',usage:28.00,supply:112.00,feedIn:5.0,note:'',giftCard:150,freeHours:0},
-    {provider:'Sumo Energy',plan:'Sumo Assure',type:'Fixed 12 months',usage:26.80,supply:107.50,feedIn:3.5,note:'Low feed-in',giftCard:0,freeHours:0},
-    {provider:'OVO Energy',plan:'The One Plan',type:'Variable (VDO rates)',usage:31.98,supply:128.24,feedIn:5.0,note:'Equal to VDO + 3% interest reward on credit. No fees.',giftCard:0,freeHours:0},
-    {provider:'Powershop',plan:'Power House',type:'Variable + Powerpacks',usage:34.31,supply:111.08,feedIn:3.3,note:'Powerpack discounts not included',giftCard:0,freeHours:0},
-    {provider:'Victorian Default Offer',plan:'VDO 2026-27 (ESC max)',type:'Regulated max',usage:31.98,supply:128.24,feedIn:4.5,note:'Maximum regulated price',isVDO:true,giftCard:0,freeHours:0}
+const MONTHS = [
+  {name:"January",  days:31, s:"summer"},
+  {name:"February", days:28, s:"summer"},
+  {name:"March",    days:31, s:"summer"},
+  {name:"April",    days:30, s:"shoulder"},
+  {name:"May",      days:31, s:"winter"},
+  {name:"June",     days:30, s:"winter"},
+  {name:"July",     days:31, s:"winter"},
+  {name:"August",   days:31, s:"winter"},
+  {name:"September",days:30, s:"shoulder"},
+  {name:"October",  days:31, s:"shoulder"},
+  {name:"November", days:30, s:"summer"},
+  {name:"December", days:31, s:"summer"},
 ];
-var SUMMER=151,WINTER=214;
 
-function updateSetup(){
-    var solar=document.getElementById('hasSolar').checked;
-    var battery=document.getElementById('hasBattery').checked;
-    document.getElementById('batterySection').style.display=solar?'block':'none';
-    document.getElementById('exportSection').style.display=solar?'block':'none';
-    document.getElementById('batteryChargeSection').style.display=(solar&&battery)?'block':'none';
-    if(!solar)document.getElementById('hasBattery').checked=false;
-    var box=document.getElementById('scenarioBox');
-    var ss=document.getElementById('summerGrid'),ws=document.getElementById('winterGrid');
-    var es=document.getElementById('solarExport'),wes=document.getElementById('winterExport');
-    if(!solar){
-        box.innerHTML='<strong>No solar, no battery</strong><br>All electricity from the grid 24/7. <strong>Usage rate</strong> and <strong>supply charge</strong> matter most for you.';
-        ss.value=15;ws.value=20;
-        document.getElementById('summerHint').textContent='All power from grid — AC usage higher in summer';
-        document.getElementById('winterHint').textContent='Heating + shorter days = more grid draw';
-    }else if(!battery){
-        box.innerHTML='<strong>Solar only (no battery)</strong><br>Free power during daytime sun hours. You draw from grid at <strong>night and on cloudy days</strong>. Feed-in tariff matters — you export excess during the day.';
-        ss.value=5;ws.value=12;es.value=12;wes.value=2;
-        document.getElementById('summerHint').textContent='Mostly night usage — solar covers daytime';
-        document.getElementById('winterHint').textContent='Longer nights + cloudy days = more grid draw';
-    }else{
-        box.innerHTML='<strong>Solar + Battery</strong><br>Battery stores daytime solar for night use. <strong>Minimal grid draw</strong> — mostly in winter when solar cannot keep up. <strong>Feed-in tariff</strong> and <strong>supply charge</strong> matter most.<br><br><strong>Free Hours bonus:</strong> GloBird (3hr) and Energy Australia (2hr) let your battery charge from grid at $0 — extra savings calculated below.';
-        ss.value=0;ws.value=4;es.value=10;wes.value=0;
-        document.getElementById('summerHint').textContent='Battery covers night — often 0 from grid';
-        document.getElementById('winterHint').textContent='Only what battery cannot cover on short/cloudy days';
-    }
-    updateR(ss,'summerVal',' kWh');updateR(ws,'winterVal',' kWh');
-    if(solar){updateR(es,'exportVal',' kWh');updateR(wes,'winterExpVal',' kWh');}
+let planCount = 1;
+
+function getUsage() {
+  return {
+    summer:   { grid: +document.getElementById("s_grid").value,   export: +document.getElementById("s_export").value },
+    shoulder: { grid: +document.getElementById("sh_grid").value,  export: +document.getElementById("sh_export").value },
+    winter:   { grid: +document.getElementById("w_grid").value,   export: +document.getElementById("w_export").value },
+  };
 }
 
-function calcFreeHoursValue(plan, chargeRateKw, hasBattery){
-    // Free hours: battery charges from grid at $0 during free window
-    // Value = hours * chargeRate(kW) * usage rate * 365 days / 100 (convert c to $)
-    if(!hasBattery || plan.freeHours === 0) return 0;
-    return plan.freeHours * chargeRateKw * plan.usage / 100 * 365;
+function updateTotals() {
+  const u = getUsage();
+  const tg = MONTHS.reduce((a,m) => a + u[m.s].grid * m.days, 0);
+  const te = MONTHS.reduce((a,m) => a + u[m.s].export * m.days, 0);
+  document.getElementById("lbl_grid").textContent = tg.toFixed(0);
+  document.getElementById("lbl_export").textContent = te.toFixed(0);
 }
 
-function calcBD(o,sg,wg,se,we){
-    var su=sg*o.usage/100*SUMMER,wu=wg*o.usage/100*WINTER;
-    var sp=o.supply/100*365;
-    var sf=se*o.feedIn/100*SUMMER,wf=we*o.feedIn/100*WINTER;
-    var tf=sf+wf,a=su+wu+sp-tf;
-    return{su:su,wu:wu,sp:sp,sf:sf,wf:wf,tf:tf,a:a};
+["s_grid","s_export","sh_grid","sh_export","w_grid","w_export"].forEach(id => {
+  document.getElementById(id).addEventListener("input", updateTotals);
+});
+updateTotals();
+
+function addPlan() {
+  const idx = planCount++;
+  const div = document.createElement("div");
+  div.className = "plan-row";
+  div.id = `plan-${idx}`;
+  div.innerHTML = `
+    <div class="plan-name-row">
+      <input type="text" id="p${idx}_name" value="New Plan ${idx}" style="flex:1;border:1.5px solid #dde2ee;border-radius:7px;padding:8px 10px;font-size:0.9rem;font-weight:600;">
+      <button class="remove-btn" onclick="removePlan(${idx})" title="Remove">✕</button>
+    </div>
+    <div class="plan-fields">
+      <div class="field"><label>Supply (c/day)</label><input type="number" id="p${idx}_supply" placeholder="e.g. 105.02" step="0.01" min="0"><div class="hint">Daily service charge</div></div>
+      <div class="field"><label>Usage (c/kWh)</label><input type="number" id="p${idx}_usage" placeholder="e.g. 26.18" step="0.01" min="0"><div class="hint">Flat rate per kWh</div></div>
+      <div class="field"><label>FiT (c/kWh)</label><input type="number" id="p${idx}_fit" placeholder="e.g. 1.00" step="0.01" min="0"><div class="hint">Feed-in tariff</div></div>
+      <div class="field"><label>Credits ($/yr)</label><input type="number" id="p${idx}_credits" value="0" step="1" min="0"><div class="hint">Gift cards, bonuses</div></div>
+    </div>`;
+  document.getElementById("plans-container").appendChild(div);
 }
 
-var step=1;
-function goToStep(s){
-    step=s;
-    document.querySelectorAll('.section').forEach(function(el){el.classList.remove('active')});
-    document.getElementById('step'+s).classList.add('active');
-    document.querySelectorAll('.progress-step').forEach(function(el){
-        var n=parseInt(el.dataset.step);
-        el.classList.remove('active','completed');
-        if(n===s)el.classList.add('active');
-        else if(n<s)el.classList.add('completed');
+function removePlan(idx) {
+  const el = document.getElementById(`plan-${idx}`);
+  if (el) el.remove();
+}
+
+function calcAnnual(supply, usage, fit) {
+  const u = getUsage();
+  return MONTHS.reduce((total, m) => {
+    const uu = u[m.s];
+    return total + (supply/100)*m.days + (usage/100)*uu.grid*m.days - (fit/100)*uu.export*m.days;
+  }, 0);
+}
+
+function getPlans() {
+  const rows = document.querySelectorAll(".plan-row");
+  const plans = [];
+  rows.forEach((row, i) => {
+    const id = row.id.replace("plan-","");
+    const name    = document.getElementById(`p${id}_name`)?.value || `Plan ${i+1}`;
+    const supply  = +document.getElementById(`p${id}_supply`)?.value || 0;
+    const usage   = +document.getElementById(`p${id}_usage`)?.value || 0;
+    const fit     = +document.getElementById(`p${id}_fit`)?.value || 0;
+    const credits = +document.getElementById(`p${id}_credits`)?.value || 0;
+    if (!supply || !usage) return;
+    const base      = calcAnnual(supply, usage, fit);
+    const effective = base - credits;
+    const u = getUsage();
+    const sup_t = (supply/100)*365;
+    const use_t = (usage/100) * MONTHS.reduce((a,m) => a + u[m.s].grid*m.days, 0);
+    const fit_t = (fit/100)   * MONTHS.reduce((a,m) => a + u[m.s].export*m.days, 0);
+    plans.push({ name, supply, usage, fit, credits, base, effective, sup_t, use_t, fit_t, isBase: i===0 });
+  });
+  return plans;
+}
+
+function calculate() {
+  const u = getUsage();
+  const total_grid   = MONTHS.reduce((a,m) => a + u[m.s].grid*m.days, 0);
+  const total_export = MONTHS.reduce((a,m) => a + u[m.s].export*m.days, 0);
+  const plans = getPlans();
+
+  if (plans.length < 1) { alert("Please enter at least your current plan's rates."); return; }
+
+  const baseline  = plans[0];
+  const sorted    = [...plans].sort((a,b) => a.effective - b.effective);
+  const best      = sorted[0];
+  const saving    = baseline.effective - best.effective;
+
+  // Show results
+  document.getElementById("results").style.display = "block";
+  document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // ── WINNER BANNER ──
+  const wb = document.getElementById("winner-banner");
+  if (best.isBase) {
+    wb.innerHTML = `<h2>✅ Your current plan is already the best</h2><div class="wsub">No cheaper option found among the plans entered.</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="slabel">Annual Cost</div><div class="sval">$${best.effective.toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Monthly Avg</div><div class="sval">$${(best.effective/12).toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Plans Compared</div><div class="sval">${plans.length}</div></div>
+      <div class="stat-box"><div class="slabel">Status</div><div class="sval" style="font-size:1rem">No switch needed</div></div>
+    </div>`;
+  } else {
+    const credNote = best.credits > 0 ? `<div class="winner-note">⚠️ Includes $${best.credits.toFixed(0)}/yr in credits/gift cards. Verify these are available before switching.</div>` : "";
+    wb.innerHTML = `<h2>🏆 Best Option: ${best.name}</h2>
+    <div class="wsub">Supply ${best.supply}c/day &middot; Usage ${best.usage}c/kWh &middot; FiT ${best.fit}c/kWh${best.credits>0?" &middot; +$"+best.credits.toFixed(0)+" credits/yr":""}</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="slabel">Effective Annual</div><div class="sval">$${best.effective.toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Monthly Average</div><div class="sval">$${(best.effective/12).toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Save vs Current</div><div class="sval">+$${saving.toFixed(2)}/yr</div></div>
+      <div class="stat-box"><div class="slabel">Save per Month</div><div class="sval">+$${(saving/12).toFixed(2)}/mo</div></div>
+    </div>${credNote}`;
+  }
+
+  // ── RANKING TABLE ──
+  const rt = document.getElementById("rank-table");
+  rt.querySelector("thead").innerHTML = `<tr><th>#</th><th>Plan</th><th>Supply c/day</th><th>Usage c/kWh</th><th>FiT c/kWh</th><th>Base $/yr</th><th>Credits</th><th>Effective $/yr</th><th>vs Current</th></tr>`;
+  const tbody = rt.querySelector("tbody");
+  tbody.innerHTML = "";
+  sorted.forEach((p, i) => {
+    const diff = baseline.effective - p.effective;
+    const vs   = p.isBase ? "Your current" : (diff > 0.5 ? `SAVE $${diff.toFixed(2)}` : diff < -0.5 ? `+$${Math.abs(diff).toFixed(2)} more` : "≈ same");
+    const cls  = i===0 ? "rank-1" : (p.isBase ? "rank-base" : "");
+    const vcls = diff > 0.5 ? "save-pos" : (diff < -0.5 ? "save-neg" : "");
+    const cr   = p.credits > 0 ? `-$${p.credits.toFixed(0)}` : "—";
+    tbody.innerHTML += `<tr class="${cls}"><td>${i+1}</td><td><strong>${p.name}</strong>${p.isBase?' <span style="font-size:.65rem;background:#ffc107;color:#7a4f00;padding:1px 6px;border-radius:10px;font-weight:700">CURRENT</span>':''}</td>
+      <td>${p.supply}c</td><td>${p.usage}c</td><td>${p.fit}c</td>
+      <td>$${p.base.toFixed(2)}</td><td>${cr}</td><td><strong>$${p.effective.toFixed(2)}</strong></td>
+      <td class="${vcls}">${vs}</td></tr>`;
+  });
+
+  // ── DETAIL CARDS ──
+  const dg = document.getElementById("detail-grid");
+  dg.innerHTML = "";
+  const rankClasses = ["rank-1","rank-2","rank-3","rank-4"];
+  sorted.forEach((p, i) => {
+    const rc    = p.isBase ? "rank-base" : (rankClasses[i] || "");
+    const diff  = baseline.effective - p.effective;
+    const svTxt = p.isBase ? "Your current plan" : (diff > 0.5 ? `SAVE $${diff.toFixed(2)}/yr` : `+$${Math.abs(diff).toFixed(2)}/yr more`);
+    const svCls = (!p.isBase && diff > 0.5) ? "saving" : "";
+    const crRow = p.credits > 0 ? `<div class="cost-line"><span>Credits / gift cards</span><span class="credit">−$${p.credits.toFixed(2)}</span></div>` : "";
+    dg.innerHTML += `<div class="detail-card ${rc}">
+      <h3>${i===0 && !p.isBase ? "🥇 " : ""}${p.name}</h3>
+      <div class="rate-pills">
+        <span class="pill">Supply ${p.supply}c/day</span>
+        <span class="pill usage-pill">Usage ${p.usage}c/kWh</span>
+        <span class="pill">FiT ${p.fit}c/kWh</span>
+      </div>
+      <div class="cost-lines">
+        <div class="cost-line"><span>Supply (${p.supply}c ÷ 100 × 365)</span><span>$${p.sup_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>Usage (${p.usage}c ÷ 100 × ${total_grid.toFixed(0)} kWh)</span><span>$${p.use_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>FiT credit (${p.fit}c ÷ 100 × ${total_export.toFixed(0)} kWh)</span><span class="credit">−$${p.fit_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>Base annual</span><span>$${p.base.toFixed(2)}</span></div>
+        ${crRow}
+        <div class="cost-line"><span>Effective annual</span><span>$${p.effective.toFixed(2)}</span></div>
+        <div class="cost-line"><span>Monthly average</span><span>$${(p.effective/12).toFixed(2)}/mo</span></div>
+        <div class="cost-line"><span>vs Current</span><span class="${svCls}">${svTxt}</span></div>
+      </div>
+    </div>`;
+  });
+
+  // ── MONTH TABLE ──
+  const mt = document.getElementById("month-table");
+  let hdr = `<tr><th>Month</th><th>Season</th><th>Grid kWh</th><th>Export kWh</th>`;
+  sorted.forEach(p => { hdr += `<th>${p.name}</th>`; });
+  hdr += `<th>Best saves</th></tr>`;
+  let body = "";
+  MONTHS.forEach(m => {
+    const uu  = u[m.s];
+    const sc  = m.s === "summer" ? "s-row" : m.s === "shoulder" ? "sh-row" : "w-row";
+    const bills = sorted.map(p => (p.supply/100)*m.days + (p.usage/100)*uu.grid*m.days - (p.fit/100)*uu.export*m.days);
+    const bestBill = Math.min(...bills);
+    const baseBill = bills[sorted.findIndex(p => p.isBase)];
+    const savedThisMonth = baseBill - bestBill;
+    const saveTxt = savedThisMonth > 0.05 ? `<span class="save-pos">−$${savedThisMonth.toFixed(2)}</span>` : `<span style="color:#888">—</span>`;
+    body += `<tr class="${sc}"><td>${m.name}</td><td>${m.s}</td><td>${uu.grid}</td><td>${uu.export}</td>`;
+    bills.forEach((b,i) => {
+      const isBest = Math.abs(b - bestBill) < 0.001;
+      body += `<td${isBest?' style="font-weight:700;color:#1a7a40"':''}>$${b.toFixed(2)}</td>`;
     });
-    window.scrollTo({top:0,behavior:'smooth'});
+    body += `<td>${saveTxt}</td></tr>`;
+  });
+  // Totals row
+  const totals = sorted.map(p => p.base);
+  const baseTot = sorted.find(p => p.isBase)?.base || 0;
+  const bestTot = Math.min(...totals);
+  body += `<tr class="total-row"><td>TOTAL</td><td>365 days</td><td>${total_grid.toFixed(0)} kWh</td><td>${total_export.toFixed(0)} kWh</td>`;
+  sorted.forEach(p => { body += `<td>$${p.base.toFixed(2)}</td>`; });
+  body += `<td><span style="color:#6fcf97">−$${(baseTot-bestTot).toFixed(2)}</span></td></tr>`;
+  mt.innerHTML = hdr + body;
+
+  // ── SENSITIVITY ──
+  const sg = document.getElementById("sens-grid");
+  sg.innerHTML = `
+    <div class="sens-box"><div class="slb">FiT (most powerful)</div><div class="sval">$${(total_export/100).toFixed(2)}/yr</div><div class="sdesc">per 1c/kWh change<br>${total_export.toFixed(0)} kWh exported/yr</div></div>
+    <div class="sens-box"><div class="slb">Usage Rate</div><div class="sval">$${(total_grid/100).toFixed(2)}/yr</div><div class="sdesc">per 1c/kWh change<br>${total_grid.toFixed(0)} kWh grid used/yr</div></div>
+    <div class="sens-box"><div class="slb">Supply Charge</div><div class="sval">$3.65/yr</div><div class="sdesc">per 1c/day change<br>365 days — fixed cost</div></div>`;
+
+  // ── ASSUMPTIONS ──
+  document.getElementById("assumptions-box").innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Summer (Nov–Mar · 151 days)</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">Grid ${u.summer.grid} kWh/day · Export ${u.summer.export} kWh/day</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Shoulder (Apr/Sep/Oct · 91 days)</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">Grid ${u.shoulder.grid} kWh/day · Export ${u.shoulder.export} kWh/day</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Winter (May–Aug · 122 days)</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">Grid ${u.winter.grid} kWh/day · Export ${u.winter.export} kWh/day</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Annual grid usage</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${total_grid.toFixed(0)} kWh/yr</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Annual solar export</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${total_export.toFixed(0)} kWh/yr</td></tr>
+      <tr><td style="padding:4px 8px;color:#888">Plans compared</td><td style="padding:4px 8px;text-align:right;font-weight:600">${plans.length} plans</td></tr>
+    </table>`;
 }
-function updateR(el,id,suf){document.getElementById(id).textContent=el.value+suf}
-function toggleBD(id){document.getElementById(id).classList.toggle('open')}
 
-function compare(){
-    goToStep(3);
-    document.getElementById('loading').style.display='block';
-    document.getElementById('results').style.display='none';
-    setTimeout(function(){
-        var solar=document.getElementById('hasSolar').checked;
-        var battery=document.getElementById('hasBattery').checked;
-        var chargeRate=battery?parseFloat(document.getElementById('chargeRate').value):5;
-        var sg=parseFloat(document.getElementById('summerGrid').value);
-        var wg=parseFloat(document.getElementById('winterGrid').value);
-        var se=solar?parseFloat(document.getElementById('solarExport').value):0;
-        var we=solar?parseFloat(document.getElementById('winterExport').value):0;
-        var cu=parseFloat(document.getElementById('curUsage').value)||0;
-        var cs=parseFloat(document.getElementById('curSupply').value)||0;
-        var cf=parseFloat(document.getElementById('curFeedIn').value)||0;
-        var cn=document.getElementById('curProvider').value||'Your Current Plan';
-        var hc=cu>0&&cs>0;
-        var all=PLANS.slice();
-        if(hc)all.push({provider:cn,plan:'Your current plan',type:'Current',usage:cu,supply:cs,feedIn:cf,note:'',isCurrent:true,giftCard:0,freeHours:0});
-        var res=all.map(function(p){
-            var bd=calcBD(p,sg,wg,se,we);
-            var fhv=calcFreeHoursValue(p,chargeRate,battery);
-            var gc=p.giftCard||0;
-            var rawAnnual=bd.a;
-            var effectiveAnnual=rawAnnual-gc-fhv;
-            return{provider:p.provider,plan:p.plan,type:p.type,usage:p.usage,supply:p.supply,feedIn:p.feedIn,note:p.note,isVDO:p.isVDO,isCurrent:p.isCurrent,su:bd.su,wu:bd.wu,sp:bd.sp,sf:bd.sf,wf:bd.wf,tf:bd.tf,freeHours:p.freeHours||0,freeHoursValue:Math.round(fhv),giftCard:gc,rawAnnual:Math.round(rawAnnual),annual:Math.round(effectiveAnnual),monthly:Math.round(effectiveAnnual/12),spDisp:Math.round(bd.sp)};
-        });
-        res.sort(function(a,b){return a.annual-b.annual});
-        var best=res[0],cur=res.find(function(r){return r.isCurrent});
-        var sum=res.length+' plans compared (incl. gift cards & free hours bonuses).';
-        if(cur){var sv=cur.annual-best.annual;if(sv>0)sum+=' Switch to '+best.provider+' to save $'+sv+'/year ($'+Math.round(sv/12)+'/month).';else sum+=' Your plan is already competitive!';}
-        document.getElementById('resultsSummary').textContent=sum;
-
-        // Free Hours analysis box (only if battery)
-        var fhHtml='';
-        if(battery){
-            var fhPlans=res.filter(function(r){return r.freeHours>0});
-            if(fhPlans.length>0){
-                fhHtml='<div class="free-hrs-box"><h3>Free Hours Bonus (Battery Charging)</h3>';
-                fhHtml+='<p>These providers give free electricity windows. With your <strong>'+chargeRate+' kW</strong> battery charger, you save by charging from grid at $0:</p>';
-                fhHtml+='<table class="free-hrs-table"><tr><th>Provider</th><th>Free Hours</th><th>Daily kWh Free</th><th class="num">Annual Value</th></tr>';
-                fhPlans.forEach(function(fp){
-                    var dailyKwh=fp.freeHours*chargeRate;
-                    fhHtml+='<tr><td>'+fp.provider+'</td><td>'+fp.freeHours+' hrs/day</td><td>'+dailyKwh.toFixed(1)+' kWh</td><td class="num"><strong>$'+fp.freeHoursValue+'</strong></td></tr>';
-                });
-                fhHtml+='</table>';
-                fhHtml+='<p style="margin-top:10px;font-size:.75rem;color:#455A64">In winter, if your grid draw is covered by free hours alone, your usage cost = $0. Battery charges for free during those hours instead of drawing expensive peak power.</p>';
-                fhHtml+='</div>';
-            }
-        }
-        document.getElementById('freeHoursBox').innerHTML=fhHtml;
-
-        // Why boxes
-        var wh='';
-        if(cur&&cur.annual>best.annual){
-            wh+='<div class="why-box why-expensive"><h3>Why '+cur.provider+' costs more:</h3><ul>';
-            if(cur.supply>best.supply+5)wh+='<li>Supply charge '+cur.supply.toFixed(1)+'c/day = $'+Math.round(cur.supply/100*365)+'/yr — $'+Math.round((cur.supply-best.supply)/100*365)+' more than cheapest</li>';
-            if(cur.feedIn<best.feedIn-1&&se>0)wh+='<li>Feed-in '+cur.feedIn+'c vs '+best.feedIn+'c — losing $'+Math.round((best.feedIn-cur.feedIn)/100*(se*SUMMER+we*WINTER))+'/yr in solar credits</li>';
-            if(cur.usage>best.usage+3)wh+='<li>Usage rate '+cur.usage+'c vs '+best.usage+'c — paying '+(cur.usage-best.usage).toFixed(1)+'c more per kWh</li>';
-            if(best.giftCard>0)wh+='<li>'+best.provider+' offers $'+best.giftCard+' sign-up gift card</li>';
-            if(best.freeHours>0&&battery)wh+='<li>'+best.provider+' gives '+best.freeHours+' free hours/day worth $'+best.freeHoursValue+'/yr with battery</li>';
-            wh+='</ul></div>';
-            wh+='<div class="why-box why-cheap"><h3>Why '+best.provider+' saves most:</h3><ul>';
-            if(best.feedIn>=6&&se>0)wh+='<li>High feed-in ('+best.feedIn+'c) earns $'+Math.round(best.tf)+'/yr for solar exports</li>';
-            if(best.supply<cur.supply-5)wh+='<li>Lower daily charge saves $'+Math.round((cur.supply-best.supply)/100*365)+'/yr</li>';
-            if(best.usage<cur.usage-3)wh+='<li>Cheaper usage rate saves on every kWh</li>';
-            if(best.giftCard>0)wh+='<li>$'+best.giftCard+' sign-up gift card (credited in first year)</li>';
-            if(best.freeHours>0&&battery)wh+='<li>'+best.freeHours+' free hours/day = $'+best.freeHoursValue+'/yr free battery charging</li>';
-            if(se>5)wh+='<li>For solar homes: high feed-in + low supply = biggest savings</li>';
-            else if(sg+wg>20)wh+='<li>For high-usage homes: low usage rate matters most</li>';
-            wh+='</ul></div>';
-        }
-        document.getElementById('whyBox').innerHTML=wh;
-
-        // Margin Finder — breakeven analysis
-        var mHtml='';
-        if(res.length>=2){
-            var cheapest=res[0];
-            var runners=res.filter(function(r){return !r.isCurrent && !r.isVDO && r!==cheapest}).slice(0,7);
-            mHtml='<div class="margin-box"><h3>Margin Finder — Breakeven Analysis</h3>';
-            mHtml+='<p>How close are other plans to #1? What gift card or rate cut would they need to beat <strong>'+cheapest.provider+'</strong> ($'+cheapest.annual+'/yr)?</p>';
-            mHtml+='<table class="margin-table"><tr><th>Provider</th><th class="num">Effective $/yr</th><th class="num">Gap to #1</th><th class="num">Gift Card Needed</th><th class="num">Rate Cut Needed</th></tr>';
-            runners.forEach(function(r){
-                var gap=r.annual-cheapest.annual;
-                var gcNeeded=gap+r.giftCard; // they already have their gc applied, so need this extra
-                var totalKwh=sg*SUMMER+wg*WINTER;
-                var rateCut=totalKwh>0?((gap*100)/totalKwh).toFixed(2):'n/a';
-                var isClose=gap<=30;
-                mHtml+='<tr'+(isClose?' class="win"':'')+'><td>'+r.provider+'</td><td class="num">$'+r.annual+'</td><td class="num">+$'+gap+'</td><td class="num">$'+gcNeeded+'</td><td class="num">'+rateCut+'c/kWh</td></tr>';
-            });
-            mHtml+='</table>';
-            mHtml+='<p style="margin-top:10px;font-size:.75rem;color:#4A148C"><strong>How to read:</strong> "Gift Card Needed" = the total sign-up bonus that would make them equal to #1. "Rate Cut" = how much their usage rate would need to drop. Green rows are within $30 — almost tied.</p>';
-            mHtml+='</div>';
-        }
-        document.getElementById('marginBox').innerHTML=mHtml;
-
-        // Results list
-        document.getElementById('resultsList').innerHTML=res.map(function(r,i){
-            var cc='',badge='';
-            if(i===0){cc='best';badge='<span class="badge badge-best">Cheapest for you</span>';}
-            if(r.isCurrent){cc='current';badge='<span class="badge badge-current">Your Current Plan</span>';}
-            if(r.isVDO){badge='<span class="badge" style="background:#E3F2FD;color:#1565C0">VDO Max</span>';}
-            if(!r.isCurrent&&!r.isVDO&&i>0){var d=r.annual-best.annual;if(d>0)badge='<span class="badge badge-savings">+$'+d+'/yr</span>';}
-            // Extra badges for gift cards and free hours
-            var extraBadge='';
-            if(r.giftCard>0)extraBadge+=' <span class="badge badge-gift">$'+r.giftCard+' gift card</span>';
-            if(r.freeHours>0&&battery)extraBadge+=' <span class="badge badge-freehrs">'+r.freeHours+'hr free</span>';
-            var bid='bd_'+i;
-            var gcRow=r.giftCard>0?'<tr><td>Sign-up gift card</td><td class="num">One-off credit</td><td class="num credit">-$'+r.giftCard+'</td></tr>':'';
-            var fhRow=(r.freeHours>0&&battery)?'<tr><td>Free hours value ('+r.freeHours+'hr x '+chargeRate+'kW)</td><td class="num">'+r.freeHours+'hr x '+chargeRate+'kW x '+r.usage+'c x 365</td><td class="num credit">-$'+r.freeHoursValue+'</td></tr>':'';
-            return '<div class="result-card '+cc+'">'+badge+extraBadge+'<div class="result-provider">'+r.provider+'</div><div class="result-plan">'+r.plan+' &middot; '+r.type+(r.note?' &middot; <em>'+r.note+'</em>':'')+'</div><div class="result-cost"><span class="result-annual">$'+r.annual+' <small>/yr</small></span><span class="result-monthly">~$'+r.monthly+'/mo</span></div><div class="result-details"><div class="result-detail"><div class="dt">Usage</div><div class="dd">'+r.usage+'c</div></div><div class="result-detail"><div class="dt">Supply</div><div class="dd">'+r.supply.toFixed(0)+'c/d</div></div><div class="result-detail"><div class="dt">Feed-in</div><div class="dd">'+r.feedIn+'c</div></div><div class="result-detail"><div class="dt">FiT Credit</div><div class="dd" style="color:#43A047">-$'+Math.round(r.tf)+'</div></div></div><button class="btn-details" onclick="toggleBD(\''+bid+'\')">More Details</button><div class="breakdown" id="'+bid+'"><table class="breakdown-table"><tr><th colspan="3">Annual Breakdown — '+r.provider+'</th></tr><tr><td>Supply charge</td><td class="num">'+r.supply.toFixed(2)+'c/day x 365</td><td class="num">$'+r.spDisp+'</td></tr><tr><td>Summer grid</td><td class="num">'+sg+' kWh x '+r.usage+'c x '+SUMMER+' days</td><td class="num">$'+Math.round(r.su)+'</td></tr><tr><td>Winter grid</td><td class="num">'+wg+' kWh x '+r.usage+'c x '+WINTER+' days</td><td class="num">$'+Math.round(r.wu)+'</td></tr><tr><td>Summer feed-in</td><td class="num">'+se+' kWh x '+r.feedIn+'c x '+SUMMER+' days</td><td class="num credit">-$'+Math.round(r.sf)+'</td></tr><tr><td>Winter feed-in</td><td class="num">'+we+' kWh x '+r.feedIn+'c x '+WINTER+' days</td><td class="num credit">-$'+Math.round(r.wf)+'</td></tr>'+gcRow+fhRow+'<tr style="background:var(--sun-glow)"><td><strong>Effective Annual</strong></td><td></td><td class="num"><strong>$'+r.annual+'</strong></td></tr><tr><td>Raw (no bonuses)</td><td></td><td class="num">$'+r.rawAnnual+'</td></tr><tr><td>Monthly</td><td></td><td class="num">$'+r.monthly+'/mo</td></tr><tr><td>Daily</td><td></td><td class="num">$'+(r.annual/365).toFixed(2)+'/day</td></tr></table></div></div>';
-        }).join('');
-        document.getElementById('loading').style.display='none';
-        document.getElementById('results').style.display='block';
-    },800);
+function resetAll() {
+  document.getElementById("results").style.display = "none";
+  const rows = document.querySelectorAll(".plan-row");
+  rows.forEach((r,i) => { if (i > 0) r.remove(); });
+  planCount = 1;
+  scrollTo(0,0);
 }
-updateSetup();
 </script>
 </body>
 </html>
