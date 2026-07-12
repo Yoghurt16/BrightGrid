@@ -325,8 +325,31 @@ tr.total-row td { background: #1a1a2e; color: white; font-weight: 700; }
       </div>
     </div>
 
-    <!-- ToU RESULTS (populated in next step) -->
-    <div id="tou-results" style="display:none;"></div>
+    <!-- ToU RESULTS -->
+    <div id="tou-results" style="display:none;">
+      <div class="section-header">ToU Report Results</div>
+      <div id="tou-winner-banner" class="winner-banner"></div>
+      <div class="card">
+        <div class="card-title">Full Ranking — ToU Plans vs Your Current Flat Rate</div>
+        <div style="overflow-x:auto"><table class="results-table" id="tou-rank-table"><thead></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cost Breakdown — Per ToU Plan</div>
+        <div class="detail-grid" id="tou-detail-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Month-by-Month Bills</div>
+        <div style="overflow-x:auto"><table class="month-table" id="tou-month-table"></table></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Formula &amp; Assumptions</div>
+        <div style="font-size:0.82rem; color:#555; line-height:1.9;" id="tou-assumptions-box"></div>
+      </div>
+      <div class="btn-row" style="margin-top:4px;">
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Print / Save as PDF</button>
+        <button class="btn btn-secondary" onclick="scrollTo(0,0)">↑ Back to top</button>
+      </div>
+    </div>
 
   </div><!-- /tab-tou -->
 
@@ -629,7 +652,206 @@ function resetTou() {
 }
 
 function calculateTou() {
-  alert("ToU form is ready. Calculation logic + comparison against your Flat Rate baseline will be added in the next step (2c).");
+  const u = getUsage();
+  const peakHrs = {
+    summer:   +document.getElementById('tou_s_hrs').value,
+    shoulder: +document.getElementById('tou_sh_hrs').value,
+    winter:   +document.getElementById('tou_w_hrs').value
+  };
+  const winStart = document.getElementById('tou_start').value;
+  const winEnd   = document.getElementById('tou_end').value;
+  const [sh,sm] = winStart.split(':').map(Number);
+  const [eh,em] = winEnd.split(':').map(Number);
+  let winHours = (eh+em/60) - (sh+sm/60);
+  if (winHours <= 0) winHours += 24;
+
+  // Cap peak hrs at window duration
+  ['summer','shoulder','winter'].forEach(s => {
+    if (peakHrs[s] > winHours) {
+      alert(`${s} peak-window hours (${peakHrs[s]}) exceeds window duration (${winHours.toFixed(1)}h). Capping to ${winHours.toFixed(1)}.`);
+      peakHrs[s] = winHours;
+    }
+  });
+
+  const total_grid   = MONTHS.reduce((a,m)=>a+u[m.s].grid*m.days,0);
+  const total_export = MONTHS.reduce((a,m)=>a+u[m.s].export*m.days,0);
+
+  // Collect ToU plans
+  const touRows = document.querySelectorAll('#tou-plans-container .plan-row');
+  const touPlans = [];
+  touRows.forEach(row => {
+    const id = row.id.replace('tou-plan-','');
+    const name    = document.getElementById(`tp${id}_name`)?.value || 'ToU Plan';
+    const supply  = +document.getElementById(`tp${id}_supply`)?.value || 0;
+    const peak    = +document.getElementById(`tp${id}_peak`)?.value || 0;
+    const offpeak = +document.getElementById(`tp${id}_offpeak`)?.value || 0;
+    const fit     = +document.getElementById(`tp${id}_fit`)?.value || 0;
+    const credits = +document.getElementById(`tp${id}_credits`)?.value || 0;
+    if (!supply || !peak || !offpeak) return;
+
+    let sup_t=0, peak_t=0, off_t=0, fit_t=0, peak_kwh=0, off_kwh=0;
+    MONTHS.forEach(m => {
+      const uu = u[m.s];
+      const pHrs = peakHrs[m.s];
+      const pk_day = uu.grid * (pHrs/24);
+      const op_day = uu.grid - pk_day;
+      sup_t   += (supply/100)*m.days;
+      peak_t  += (peak/100)*pk_day*m.days;
+      off_t   += (offpeak/100)*op_day*m.days;
+      fit_t   += (fit/100)*uu.export*m.days;
+      peak_kwh += pk_day*m.days;
+      off_kwh  += op_day*m.days;
+    });
+    const base = sup_t + peak_t + off_t - fit_t;
+    const effective = base - credits;
+    touPlans.push({name, supply, peak, offpeak, fit, credits, base, effective, sup_t, peak_t, off_t, fit_t, peak_kwh, off_kwh, type:'ToU'});
+  });
+
+  if (touPlans.length < 1) { alert('Please enter at least one ToU plan (supply + peak + off-peak required).'); return; }
+
+  // Flat rate baseline from Tab 1
+  const flatSupply  = +document.getElementById('p0_supply')?.value || 0;
+  const flatUsage   = +document.getElementById('p0_usage')?.value || 0;
+  const flatFit     = +document.getElementById('p0_fit')?.value || 0;
+  const flatCredits = +document.getElementById('p0_credits')?.value || 0;
+  const flatName    = document.getElementById('p0_name')?.value || 'Current Flat';
+  const flatBase    = calcAnnual(flatSupply, flatUsage, flatFit);
+  const baseline = {
+    name: flatName, supply: flatSupply, usage: flatUsage, fit: flatFit,
+    credits: flatCredits, base: flatBase, effective: flatBase - flatCredits,
+    type: 'Flat', isBase: true
+  };
+
+  const combined = [...touPlans, baseline];
+  const sorted   = [...combined].sort((a,b) => a.effective - b.effective);
+  const best     = sorted[0];
+  const saving   = baseline.effective - best.effective;
+
+  document.getElementById('tou-results').style.display = 'block';
+  document.getElementById('tou-results').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // WINNER BANNER
+  const wb = document.getElementById('tou-winner-banner');
+  const touSorted = [...touPlans].sort((a,b)=>a.effective-b.effective);
+  if (best.type === 'Flat') {
+    const gap = touSorted[0].effective - baseline.effective;
+    wb.innerHTML = `<h2>✅ Your current flat rate is cheaper than these ToU plans</h2>
+    <div class="wsub">Flat rate wins by $${gap.toFixed(2)}/yr vs the best ToU option</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="slabel">Current Flat</div><div class="sval">$${baseline.effective.toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Best ToU</div><div class="sval">$${touSorted[0].effective.toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Plans Compared</div><div class="sval">${combined.length}</div></div>
+      <div class="stat-box"><div class="slabel">Status</div><div class="sval" style="font-size:1rem">Stay on flat</div></div>
+    </div>`;
+  } else {
+    const credNote = best.credits > 0 ? `<div class="winner-note">⚠️ Includes $${best.credits.toFixed(0)}/yr in credits/gift cards. Verify before switching.</div>` : '';
+    wb.innerHTML = `<h2>🏆 Best Option: ${best.name} (ToU)</h2>
+    <div class="wsub">Supply ${best.supply}c &middot; Peak ${best.peak}c &middot; Off-peak ${best.offpeak}c &middot; FiT ${best.fit}c${best.credits>0?" &middot; +$"+best.credits.toFixed(0)+" credits":""}</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="slabel">Effective Annual</div><div class="sval">$${best.effective.toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Monthly Average</div><div class="sval">$${(best.effective/12).toFixed(2)}</div></div>
+      <div class="stat-box"><div class="slabel">Save vs Current</div><div class="sval">+$${saving.toFixed(2)}/yr</div></div>
+      <div class="stat-box"><div class="slabel">Save per Month</div><div class="sval">+$${(saving/12).toFixed(2)}/mo</div></div>
+    </div>${credNote}`;
+  }
+
+  // RANKING TABLE
+  const rt = document.getElementById('tou-rank-table');
+  rt.querySelector('thead').innerHTML = `<tr><th>#</th><th>Plan</th><th>Type</th><th>Rates (c)</th><th>Base $/yr</th><th>Credits</th><th>Effective $/yr</th><th>vs Current</th></tr>`;
+  const tbody = rt.querySelector('tbody');
+  tbody.innerHTML = '';
+  sorted.forEach((p,i) => {
+    const diff = baseline.effective - p.effective;
+    const vs   = p.isBase ? 'Your current' : (diff > 0.5 ? `SAVE $${diff.toFixed(2)}` : diff < -0.5 ? `+$${Math.abs(diff).toFixed(2)} more` : '≈ same');
+    const cls  = i===0 ? 'rank-1' : (p.isBase ? 'rank-base' : '');
+    const vcls = diff > 0.5 ? 'save-pos' : (diff < -0.5 ? 'save-neg' : '');
+    const cr   = p.credits > 0 ? `-$${p.credits.toFixed(0)}` : '—';
+    const rates = p.type === 'Flat'
+      ? `${p.supply}/${p.usage}/${p.fit}`
+      : `${p.supply}/${p.peak}/${p.offpeak}/${p.fit}`;
+    tbody.innerHTML += `<tr class="${cls}"><td>${i+1}</td>
+      <td><strong>${p.name}</strong>${p.isBase?' <span style="font-size:.65rem;background:#ffc107;color:#7a4f00;padding:1px 6px;border-radius:10px;font-weight:700">CURRENT</span>':''}</td>
+      <td>${p.type}</td><td style="font-size:0.78rem">${rates}</td>
+      <td>$${p.base.toFixed(2)}</td><td>${cr}</td>
+      <td><strong>$${p.effective.toFixed(2)}</strong></td>
+      <td class="${vcls}">${vs}</td></tr>`;
+  });
+
+  // DETAIL CARDS (ToU plans only)
+  const dg = document.getElementById('tou-detail-grid');
+  dg.innerHTML = '';
+  const rankClasses = ['rank-1','rank-2','rank-3','rank-4'];
+  touSorted.forEach((p,i) => {
+    const diff  = baseline.effective - p.effective;
+    const svTxt = diff > 0.5 ? `SAVE $${diff.toFixed(2)}/yr` : `+$${Math.abs(diff).toFixed(2)}/yr more`;
+    const svCls = diff > 0.5 ? 'saving' : '';
+    const crRow = p.credits > 0 ? `<div class="cost-line"><span>Credits / gift cards</span><span class="credit">−$${p.credits.toFixed(2)}</span></div>` : '';
+    dg.innerHTML += `<div class="detail-card ${rankClasses[i]||''}">
+      <h3>${i===0?'🥇 ':''}${p.name}</h3>
+      <div class="rate-pills">
+        <span class="pill">Supply ${p.supply}c/day</span>
+        <span class="pill usage-pill">Peak ${p.peak}c</span>
+        <span class="pill usage-pill">Off-pk ${p.offpeak}c</span>
+        <span class="pill">FiT ${p.fit}c</span>
+      </div>
+      <div class="cost-lines">
+        <div class="cost-line"><span>Supply (${p.supply}c × 365)</span><span>$${p.sup_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>Peak (${p.peak}c × ${p.peak_kwh.toFixed(0)} kWh)</span><span>$${p.peak_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>Off-peak (${p.offpeak}c × ${p.off_kwh.toFixed(0)} kWh)</span><span>$${p.off_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>FiT credit (${p.fit}c × ${total_export.toFixed(0)} kWh)</span><span class="credit">−$${p.fit_t.toFixed(2)}</span></div>
+        <div class="cost-line"><span>Base annual</span><span>$${p.base.toFixed(2)}</span></div>
+        ${crRow}
+        <div class="cost-line"><span>Effective annual</span><span>$${p.effective.toFixed(2)}</span></div>
+        <div class="cost-line"><span>vs Current Flat</span><span class="${svCls}">${svTxt}</span></div>
+      </div>
+    </div>`;
+  });
+
+  // MONTH TABLE (Flat + all ToU)
+  const mt = document.getElementById('tou-month-table');
+  let hdr = `<tr><th>Month</th><th>Season</th><th>Grid kWh</th><th>Peak kWh</th><th>Off-Pk kWh</th><th>${baseline.name} (Flat)</th>`;
+  touSorted.forEach(p => { hdr += `<th>${p.name}</th>`; });
+  hdr += `</tr>`;
+  let body = '';
+  MONTHS.forEach(m => {
+    const uu = u[m.s];
+    const pHrs = peakHrs[m.s];
+    const pk_day = uu.grid * (pHrs/24);
+    const op_day = uu.grid - pk_day;
+    const sc = m.s==='summer'?'s-row':m.s==='shoulder'?'sh-row':'w-row';
+    const flatBill = (baseline.supply/100)*m.days + (baseline.usage/100)*uu.grid*m.days - (baseline.fit/100)*uu.export*m.days;
+    const touBills = touSorted.map(p => (p.supply/100)*m.days + (p.peak/100)*pk_day*m.days + (p.offpeak/100)*op_day*m.days - (p.fit/100)*uu.export*m.days);
+    const allBills = [flatBill, ...touBills];
+    const bestBill = Math.min(...allBills);
+    body += `<tr class="${sc}"><td>${m.name}</td><td>${m.s}</td><td>${uu.grid}</td><td>${pk_day.toFixed(2)}</td><td>${op_day.toFixed(2)}</td>`;
+    allBills.forEach(b => {
+      const isBest = Math.abs(b-bestBill)<0.001;
+      body += `<td${isBest?' style="font-weight:700;color:#1a7a40"':''}>$${b.toFixed(2)}</td>`;
+    });
+    body += `</tr>`;
+  });
+  body += `<tr class="total-row"><td>TOTAL</td><td>365d</td><td>${total_grid.toFixed(0)}</td><td colspan="2" style="text-align:center">by season</td><td>$${baseline.base.toFixed(2)}</td>`;
+  touSorted.forEach(p => body += `<td>$${p.base.toFixed(2)}</td>`);
+  body += `</tr>`;
+  mt.innerHTML = hdr + body;
+
+  // ASSUMPTIONS + FORMULA
+  document.getElementById('tou-assumptions-box').innerHTML = `
+    <div style="background:#f0f4ff;padding:12px 14px;border-radius:8px;margin-bottom:12px;font-family:'Consolas',monospace;font-size:0.78rem;color:#333;line-height:1.7;">
+      <strong style="font-family:inherit;">Formula:</strong><br>
+      peak_kWh/day = grid_kWh × (peak_hrs_used ÷ 24)<br>
+      offpeak_kWh/day = grid_kWh − peak_kWh<br>
+      annual = (supply÷100 × 365) + Σ(peak÷100 × peak_kWh × days) + Σ(offpeak÷100 × op_kWh × days) − Σ(fit÷100 × export × days)
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Peak window</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${winStart} – ${winEnd} (${winHours.toFixed(1)} hrs/day)</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Summer peak hrs used</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${peakHrs.summer} hrs/day</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Shoulder peak hrs used</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${peakHrs.shoulder} hrs/day</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Winter peak hrs used</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${peakHrs.winter} hrs/day</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Annual grid usage</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${total_grid.toFixed(0)} kWh/yr</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">Annual solar export</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${total_export.toFixed(0)} kWh/yr</td></tr>
+      <tr><td style="padding:4px 8px;color:#888">Baseline (flat current)</td><td style="padding:4px 8px;text-align:right;font-weight:600">${baseline.name} — $${baseline.effective.toFixed(2)}/yr</td></tr>
+    </table>`;
 }
 </script>
 </body>
