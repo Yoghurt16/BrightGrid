@@ -37,10 +37,11 @@ header p { font-size: 0.88rem; color: #aab8dd; margin-top: 6px; }
 
 /* PLAN ROWS */
 .plan-row { border: 1.5px solid #e8eaf0; border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative; }
-.plan-row:first-child { border-color: #ffc107; background: #fffbf0; }
+#plans-container .plan-row:first-child { border-color: #ffc107; background: #fffbf0; }
 .plan-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .plan-name-row input[type=text] { flex: 1; font-size: 0.9rem; font-weight: 600; }
 .plan-fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.plan-fields.tou { grid-template-columns: repeat(5, 1fr); }
 .remove-btn { background: none; border: none; color: #ccc; font-size: 1.1rem; cursor: pointer; padding: 0 4px; }
 .remove-btn:hover { color: #e53935; }
 .baseline-badge { font-size: 0.65rem; font-weight: 700; background: #ffc107; color: #7a4f00; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
@@ -121,6 +122,14 @@ tr.total-row td { background: #1a1a2e; color: white; font-weight: 700; }
 /* SECTION HEADERS */
 .section-header { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #888; margin: 24px 0 10px; }
 
+/* TABS */
+.tabs { display: flex; gap: 4px; background: white; border-radius: 12px; padding: 6px; margin-bottom: 20px; box-shadow: 0 1px 5px rgba(0,0,0,0.07); }
+.tab-btn { flex: 1; padding: 12px 16px; border: none; background: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #666; cursor: pointer; transition: all 0.2s; }
+.tab-btn:hover { background: #f5f7fa; color: #1a1a2e; }
+.tab-btn.active { background: #1a1a2e; color: white; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
 /* PRINT */
 @media print { header, .card:not(#results .card), .btn-row, .add-plan-btn { display: none; } #results { display: block !important; } }
 @media(max-width:600px) { .two-col, .three-col, .season-grid, .stats-grid, .detail-grid, .sens-grid, .plan-fields { grid-template-columns: 1fr; } }
@@ -134,6 +143,14 @@ tr.total-row td { background: #1a1a2e; color: white; font-weight: 700; }
 </header>
 
 <div class="container">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabbtn-flat" onclick="switchTab('flat')">Flat Rate</button>
+    <button class="tab-btn" id="tabbtn-tou" onclick="switchTab('tou')">Peak / Off-Peak (ToU)</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-flat">
 
   <!-- STEP 1: USAGE PROFILE -->
   <div class="card">
@@ -234,6 +251,85 @@ tr.total-row td { background: #1a1a2e; color: white; font-weight: 700; }
     </div>
 
   </div>
+
+  </div><!-- /tab-flat -->
+
+  <div class="tab-panel" id="tab-tou">
+
+    <!-- Usage source note -->
+    <div class="card" style="background:#f0f4ff; border-left:4px solid #3355bb; padding:14px 18px;">
+      <div style="font-size:0.85rem; color:#333; line-height:1.6;">
+        <strong style="color:#1a1a2e;">Using your usage profile from the Flat Rate tab.</strong>
+        Grid usage and solar export per season are shared. Switch tabs to edit them.
+      </div>
+    </div>
+
+    <!-- STEP 1: PEAK WINDOW -->
+    <div class="card">
+      <div class="card-title">Peak Window <span class="tag">When peak rates apply</span></div>
+      <div class="card-desc">Set the hours when peak rates apply. Most VIC ToU plans use 3pm–9pm.</div>
+      <div class="two-col">
+        <div class="field"><label>Peak start</label><input type="time" id="tou_start" value="15:00"><div class="hint">Default 3:00 PM</div></div>
+        <div class="field"><label>Peak end</label><input type="time" id="tou_end" value="21:00"><div class="hint">Default 9:00 PM</div></div>
+      </div>
+      <div style="margin-top:14px; padding:11px 14px; background:#f0f2f8; border-radius:8px; font-size:0.82rem; color:#444;">
+        Peak window: <strong id="tou_window_lbl">6.0</strong> hours/day &nbsp;|&nbsp; Off-peak: <strong id="tou_offpeak_lbl">18.0</strong> hours/day
+      </div>
+    </div>
+
+    <!-- STEP 2: PEAK-WINDOW USAGE -->
+    <div class="card">
+      <div class="card-title">Peak-Window Usage <span class="tag">Per season</span></div>
+      <div class="card-desc">How many hours per day do you draw grid power during the peak window? Max = window duration. Lower in seasons where solar/battery cover your evening usage.</div>
+      <div class="season-grid">
+        <div class="season-block summer">
+          <div class="season-label">☀ Summer</div>
+          <div class="field"><label>Peak-window hrs/day</label><input type="number" id="tou_s_hrs" value="1.0" step="0.1" min="0"><div class="hint">Solar often covers evening</div></div>
+        </div>
+        <div class="season-block shoulder">
+          <div class="season-label">🍂 Shoulder</div>
+          <div class="field"><label>Peak-window hrs/day</label><input type="number" id="tou_sh_hrs" value="2.0" step="0.1" min="0"><div class="hint">Mixed conditions</div></div>
+        </div>
+        <div class="season-block winter">
+          <div class="season-label">❄ Winter</div>
+          <div class="field"><label>Peak-window hrs/day</label><input type="number" id="tou_w_hrs" value="3.0" step="0.1" min="0"><div class="hint">Higher evening demand</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: ToU PLANS -->
+    <div class="card">
+      <div class="card-title">ToU Plans <span class="tag">Enter peak &amp; off-peak rates</span></div>
+      <div class="card-desc">Add any Time-of-Use plans you want to compare. Rates inc. GST.</div>
+
+      <div id="tou-plans-container">
+        <div class="plan-row" id="tou-plan-0">
+          <div class="plan-name-row">
+            <input type="text" id="tp0_name" value="ToU Plan 1" style="flex:1;border:1.5px solid #dde2ee;border-radius:7px;padding:8px 10px;font-size:0.9rem;font-weight:600;">
+          </div>
+          <div class="plan-fields tou">
+            <div class="field"><label>Supply (c/day)</label><input type="number" id="tp0_supply" placeholder="e.g. 118.00" step="0.01" min="0"><div class="hint">Daily service</div></div>
+            <div class="field"><label>Peak (c/kWh)</label><input type="number" id="tp0_peak" placeholder="e.g. 45.00" step="0.01" min="0"><div class="hint">Peak rate</div></div>
+            <div class="field"><label>Off-peak (c/kWh)</label><input type="number" id="tp0_offpeak" placeholder="e.g. 22.00" step="0.01" min="0"><div class="hint">All other hours</div></div>
+            <div class="field"><label>FiT (c/kWh)</label><input type="number" id="tp0_fit" placeholder="e.g. 3.00" step="0.01" min="0"><div class="hint">Feed-in</div></div>
+            <div class="field"><label>Credits ($/yr)</label><input type="number" id="tp0_credits" value="0" step="1" min="0"><div class="hint">Gift cards</div></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="add-plan-btn" onclick="addTouPlan()">+ Add another ToU plan</button>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calculateTou()">⚡ Calculate ToU &amp; Compare</button>
+        <button class="btn btn-secondary" onclick="resetTou()">Reset</button>
+      </div>
+    </div>
+
+    <!-- ToU RESULTS (populated in next step) -->
+    <div id="tou-results" style="display:none;"></div>
+
+  </div><!-- /tab-tou -->
+
 </div>
 
 <script>
@@ -253,6 +349,13 @@ const MONTHS = [
 ];
 
 let planCount = 1;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('tabbtn-' + name).classList.add('active');
+}
 
 function getUsage() {
   return {
@@ -466,10 +569,67 @@ function calculate() {
 
 function resetAll() {
   document.getElementById("results").style.display = "none";
-  const rows = document.querySelectorAll(".plan-row");
+  const rows = document.querySelectorAll("#plans-container .plan-row");
   rows.forEach((r,i) => { if (i > 0) r.remove(); });
   planCount = 1;
   scrollTo(0,0);
+}
+
+// ─────────────────────────────────────────────
+// ToU (Peak / Off-Peak) — Sub-step 2b (form only)
+// ─────────────────────────────────────────────
+let touPlanCount = 1;
+
+function calcTouWindow() {
+  const s = document.getElementById('tou_start').value;
+  const e = document.getElementById('tou_end').value;
+  if (!s || !e) return;
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  let hours = (eh + em/60) - (sh + sm/60);
+  if (hours <= 0) hours += 24;
+  document.getElementById('tou_window_lbl').textContent = hours.toFixed(1);
+  document.getElementById('tou_offpeak_lbl').textContent = (24 - hours).toFixed(1);
+}
+document.getElementById('tou_start').addEventListener('input', calcTouWindow);
+document.getElementById('tou_end').addEventListener('input', calcTouWindow);
+calcTouWindow();
+
+function addTouPlan() {
+  const idx = touPlanCount++;
+  const div = document.createElement("div");
+  div.className = "plan-row";
+  div.id = `tou-plan-${idx}`;
+  div.innerHTML = `
+    <div class="plan-name-row">
+      <input type="text" id="tp${idx}_name" value="ToU Plan ${idx+1}" style="flex:1;border:1.5px solid #dde2ee;border-radius:7px;padding:8px 10px;font-size:0.9rem;font-weight:600;">
+      <button class="remove-btn" onclick="removeTouPlan(${idx})" title="Remove">✕</button>
+    </div>
+    <div class="plan-fields tou">
+      <div class="field"><label>Supply (c/day)</label><input type="number" id="tp${idx}_supply" placeholder="e.g. 118.00" step="0.01" min="0"><div class="hint">Daily service</div></div>
+      <div class="field"><label>Peak (c/kWh)</label><input type="number" id="tp${idx}_peak" placeholder="e.g. 45.00" step="0.01" min="0"><div class="hint">Peak rate</div></div>
+      <div class="field"><label>Off-peak (c/kWh)</label><input type="number" id="tp${idx}_offpeak" placeholder="e.g. 22.00" step="0.01" min="0"><div class="hint">All other hours</div></div>
+      <div class="field"><label>FiT (c/kWh)</label><input type="number" id="tp${idx}_fit" placeholder="e.g. 3.00" step="0.01" min="0"><div class="hint">Feed-in</div></div>
+      <div class="field"><label>Credits ($/yr)</label><input type="number" id="tp${idx}_credits" value="0" step="1" min="0"><div class="hint">Gift cards</div></div>
+    </div>`;
+  document.getElementById("tou-plans-container").appendChild(div);
+}
+
+function removeTouPlan(idx) {
+  const el = document.getElementById(`tou-plan-${idx}`);
+  if (el) el.remove();
+}
+
+function resetTou() {
+  document.getElementById("tou-results").style.display = "none";
+  const rows = document.querySelectorAll("#tou-plans-container .plan-row");
+  rows.forEach((r,i) => { if (i > 0) r.remove(); });
+  touPlanCount = 1;
+  scrollTo(0,0);
+}
+
+function calculateTou() {
+  alert("ToU form is ready. Calculation logic + comparison against your Flat Rate baseline will be added in the next step (2c).");
 }
 </script>
 </body>
